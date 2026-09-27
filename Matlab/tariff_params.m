@@ -28,5 +28,5 @@ function tariff = tariff_params()
 
     %% --- Export compensation ---
     tariff.export_compensation_specified = false;
-    tariff.export_compensation_rate = 0.00; % [Rs/kWh], not stated in notice
+    tariff.export_compensation_rate = 4.00; % [Rs/kWh], not stated in notice
 end
