@@ -3,9 +3,7 @@ function tariff = tariff_params()
 %
 %   Returns the tariff values published in the supplied APDCL notice,
 %   effective from 01-Apr-2026. Energy charges are effective tariffs after
-%   the stated government subsidies. The notice does not publish an export
-%   compensation/feed-in rate, so export compensation is represented as
-%   zero until an applicable metering agreement supplies that rate.
+%   the stated government subsidies. Billing uses 1:1 net metering.
 
     tariff = struct();
     tariff.category = 'LT-III Domestic-B (5 kW to 30 kW)';
@@ -26,7 +24,4 @@ function tariff = tariff_params()
     tariff.tod.solar_multiplier  = 0.80;
     tariff.tod.peak_multiplier   = 1.20;
 
-    %% --- Export compensation ---
-    tariff.export_compensation_specified = false;
-    tariff.export_compensation_rate = 0.00; % [Rs/kWh], not stated in notice
 end

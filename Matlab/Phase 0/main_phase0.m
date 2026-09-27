@@ -19,7 +19,7 @@ assert(isequal(size(P_pv), size(P_load)), ...
     'main_phase0:dimMismatch', 'P_pv and P_load must have identical dimensions.');
 
 %% 2) Run the Phase 0 no-storage EMS
-[P_gimp, P_gexp, P_curt] = rule_based_ems(P_pv, P_load, params);
+[P_gimp, P_gexp, P_curt] = simple_ems(P_pv, P_load, params);
 
 %% 3) Validate balance and operating limits
 report = validate_power_balance(P_pv, P_load, P_gimp, P_gexp, P_curt, params);
@@ -67,8 +67,9 @@ fprintf('PV generated        : %6.2f kWh\n', E_pv_total);
 fprintf('Load consumed       : %6.2f kWh\n', E_load_total);
 fprintf('Grid imported       : %6.2f kWh\n', cost_results.E_gimp);
 fprintf('Grid exported       : %6.2f kWh\n', cost_results.E_gexp);
+fprintf('Net grid energy     : %6.2f kWh\n', cost_results.E_grid_net);
+fprintf('Net billable energy : %6.2f kWh\n', cost_results.E_bill);
 fprintf('PV curtailed        : %6.2f kWh\n', E_curt_total);
 fprintf('Energy cost         : %6.2f Rs\n', cost_results.energy_cost);
-fprintf('Export compensation : %6.2f Rs\n', cost_results.export_compensation);
 fprintf('Total cost          : %6.2f Rs\n', total_cost);
 fprintf('=================================================\n');

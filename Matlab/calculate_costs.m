@@ -1,8 +1,8 @@
 function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
-%CALCULATE_COSTS Calculate monthly import cost, export compensation, and bill.
+%CALCULATE_COSTS Calculate the monthly bill using 1:1 net metering.
 %
-%   The imported energy is assigned chronologically to the tariff's monthly
-%   slabs. Each timestep's slab rate is multiplied by its APDCL ToD rate.
+%   Exported energy offsets imported energy before the net billable energy is
+%   assigned chronologically to the tariff's monthly slabs and ToD rates.
 
     if ~isequal(size(P_gimp), size(P_gexp))
         error('calculate_costs:dimensionMismatch', ...
@@ -14,19 +14,30 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
     tariff = tariff_params();
     E_gimp_profile = P_gimp * dt;
     E_gexp_profile = P_gexp * dt;
+    P_grid_net = P_gimp - P_gexp;
+    E_grid_net = sum(P_grid_net) * dt;
     E_gimp = sum(E_gimp_profile);
     E_gexp = sum(E_gexp_profile);
+    E_bill = max(E_grid_net, 0);
 
-    slab_energy = allocate_monthly_slabs(E_gimp_profile, tariff.slab_limits_kWh);
+    positive_net_energy = max(P_grid_net, 0) * dt;
+    positive_net_total = sum(positive_net_energy);
+    if positive_net_total > 0
+        billable_energy_profile = positive_net_energy * (E_bill / positive_net_total);
+    else
+        billable_energy_profile = zeros(size(P_grid_net));
+    end
+
+    slab_energy = allocate_monthly_slabs(billable_energy_profile, tariff.slab_limits_kWh);
     tod_multiplier = build_tod_multiplier(numel(P_gimp), dt, tariff.tod);
     import_rate = slab_energy.rate .* tod_multiplier;
     energy_cost = sum(slab_energy.cost .* tod_multiplier);
-    export_compensation = E_gexp * tariff.export_compensation_rate;
-    total_cost = energy_cost - export_compensation;
+    total_cost = energy_cost;
 
-    cost_results = struct('E_gimp', E_gimp, 'E_gexp', E_gexp, ...
+    cost_results = struct('P_grid_net', P_grid_net, ...
+        'E_gimp', E_gimp, 'E_gexp', E_gexp, 'E_grid_net', E_grid_net, ...
+        'E_bill', E_bill, ...
         'energy_cost', energy_cost, ...
-        'export_compensation', export_compensation, ...
         'total_cost', total_cost, 'import_rate', import_rate, ...
         'slab_energy', slab_energy.energy);
 end

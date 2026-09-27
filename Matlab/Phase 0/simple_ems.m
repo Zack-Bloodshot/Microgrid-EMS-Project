@@ -1,4 +1,4 @@
-function [P_gimp, P_gexp, P_curt] = rule_based_ems(P_pv, P_load, params)
+function [P_gimp, P_gexp, P_curt] = simple_ems(P_pv, P_load, params)
 %RULE_BASED_EMS Phase 0 no-storage rule-based dispatch.
 %
 %   PV serves the load first. A surplus is exported up to the grid export
