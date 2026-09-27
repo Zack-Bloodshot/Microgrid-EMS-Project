@@ -3,8 +3,6 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
 %
 %   The imported energy is assigned chronologically to the tariff's monthly
 %   slabs. Each timestep's slab rate is multiplied by its APDCL ToD rate.
-%   Fixed charge is added once for the billing period represented by the
-%   supplied profile.
 
     if ~isequal(size(P_gimp), size(P_gexp))
         error('calculate_costs:dimensionMismatch', ...
@@ -24,14 +22,13 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
     import_rate = slab_energy.rate .* tod_multiplier;
     energy_cost = sum(slab_energy.cost .* tod_multiplier);
     export_compensation = E_gexp * tariff.export_compensation_rate;
-    fixed_charge = tariff.fixed_charge;
-    total_cost = energy_cost - export_compensation + fixed_charge;
+    total_cost = energy_cost - export_compensation;
 
     cost_results = struct('E_gimp', E_gimp, 'E_gexp', E_gexp, ...
         'energy_cost', energy_cost, ...
         'export_compensation', export_compensation, ...
-        'fixed_charge', fixed_charge, 'total_cost', total_cost, ...
-        'import_rate', import_rate, 'slab_energy', slab_energy.energy);
+        'total_cost', total_cost, 'import_rate', import_rate, ...
+        'slab_energy', slab_energy.energy);
 end
 
 function slab_energy = allocate_monthly_slabs(energy_profile, slab_limits)

@@ -70,6 +70,5 @@ fprintf('Grid exported       : %6.2f kWh\n', cost_results.E_gexp);
 fprintf('PV curtailed        : %6.2f kWh\n', E_curt_total);
 fprintf('Energy cost         : %6.2f Rs\n', cost_results.energy_cost);
 fprintf('Export compensation : %6.2f Rs\n', cost_results.export_compensation);
-fprintf('Fixed charge        : %6.2f Rs\n', cost_results.fixed_charge);
 fprintf('Total cost          : %6.2f Rs\n', total_cost);
 fprintf('=================================================\n');
