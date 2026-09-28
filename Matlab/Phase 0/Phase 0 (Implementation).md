@@ -69,3 +69,34 @@
 #### 4. Post-Simulation Validation Check
 * **Power Balance Residual:**
   $$\text{Residual}(k) = \left| P_{\text{grid,imp}}(k) - P_{\text{grid,exp}}(k) - P_{\text{load}}(k) + P_{\text{pv}}(k) - P_{\text{curt}}(k) \right| < 10^{-6}$$
+
+
+---
+# Simulation Results 
+
+- Check `system_params.m` , `generate_pv_profile.m` , `generate_load_profile.m` for the data used. 
+![[Phase 0.webp|657]]
+
+```
+===== Phase 0 EMS Validation Summary =====
+Timesteps simulated        : 96
+Max power balance residual : 4.441e-16 -> PASS
+Grid import within limit   : PASS
+Grid export within limit   : PASS
+OVERALL RESULT              : PASS
+============================================
+
+===== Phase 0 Daily Energy and Cost Summary =====
+PV generated        :  15.28 kWh
+Load consumed       :  35.29 kWh
+Grid imported       :  26.72 kWh
+Grid exported       :   6.71 kWh
+PV curtailed        :   0.00 kWh
+Energy cost         : 192.36 Rs
+Export compensation :  26.86 Rs
+Total cost          : 165.50 Rs
+=================================================
+```
+
+---
+
