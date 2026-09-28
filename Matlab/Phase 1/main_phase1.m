@@ -29,7 +29,7 @@ assert(numel(P_pv) == params.N, ...
     'main_phase1:dimMismatch', 'Profile length must equal params.N.');
 
 %% 3) Run the Phase 1 rule-based EMS
-[P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt] = rule_based_ems(P_pv, P_load, params);
+[P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt] = rule_based_ems1(P_pv, P_load, params);
 
 % Dimension sanity checks before validation/plotting
 assert(numel(P_ch)   == params.N,   'P_ch length mismatch.');
@@ -40,7 +40,7 @@ assert(numel(P_curt) == params.N,   'P_curt length mismatch.');
 assert(numel(SOC)    == params.N+1, 'SOC length mismatch (expected N+1).');
 
 %% 4) Validate power balance, SOC bounds, operating limits
-report = validate_power_balance(P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, params);
+report = validate_power_balance1(P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, params);
 
 if ~report.all_checks_passed
     warning('main_phase1:validationFailed', ...

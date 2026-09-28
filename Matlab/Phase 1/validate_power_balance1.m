@@ -1,4 +1,4 @@
-function report = validate_power_balance(P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, params)
+function report = validate_power_balance1(P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, params)
 %VALIDATE_POWER_BALANCE Post-simulation validation of the Phase 1 EMS run.
 %
 %   report = VALIDATE_POWER_BALANCE(P_pv, P_load, P_ch, P_dis, P_gimp, ...

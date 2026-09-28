@@ -115,3 +115,40 @@ $$P_{\text{max-load}} \leq P_{max-grid-import}$$
 * **Power Balance Residual**:
   $$\text{Residual}(k) = \left| P_{\text{grid,imp}}(k) - P_{\text{grid,exp}}(k) + P_{\text{dis}}(k) - P_{\text{ch}}(k) - P_{\text{load}}(k) + P_{\text{pv}}(k) - P_{curt}(k) \right| < 10^{-6}$$
 
+---
+
+# Simulation Results
+
+- Check `system_params.m` , `generate_pv_profile.m` , `generate_load_profile.m` for the data used. 
+![](Phase%201.webp)
+
+```
+
+===== Phase 1 EMS Validation Summary =====
+Timesteps simulated        : 96
+Max power balance residual : 4.441e-16 (tol = 1.0e-06) -> PASS
+SOC within [0.10, 0.90]     : PASS
+P_ch within [0, 5.0] kW    : PASS
+P_dis within [0, 5.0] kW   : PASS
+P_gimp within [0, 5.0] kW  : PASS
+P_gexp within [0, 5.0] kW  : PASS
+No simultaneous ch/dis     : PASS
+--------------------------------------------
+OVERALL RESULT              : PASS
+=============================================
+
+===== Phase 1 Daily Energy Summary =====
+PV generated        :  15.28 kWh
+Load consumed       :  35.29 kWh
+Battery charged     :   6.71 kWh
+Battery discharged  :   6.06 kWh
+Grid imported       :  20.66 kWh
+Grid exported       :   0.00 kWh
+PV curtailed        :   0.00 kWh
+Energy cost         : 152.30 Rs
+Export compensation :   0.00 Rs
+Total cost          : 152.30 Rs
+Final SOC           :  0.100
+=========================================
+```
+

@@ -149,3 +149,44 @@ After running `linprog`, the output vectors must pass four sanity checks before 
 
 
 ---
+
+# Simulation Results
+- Check `system_params.m` , `generate_pv_profile.m` , `generate_load_profile.m` for the data used. 
+![](phase2.png)
+
+```
+
+===== Phase 2 LP EMS Validation Summary =====
+Timesteps simulated        : 96
+Solver convergence          : PASS (enforced in lp_naive_ems.m)
+Max power balance residual : 4.441e-16 (tol = 1.0e-06) -> PASS
+SOC within [0.10, 0.90]     : PASS
+P_ch within [0, 5.0] kW    : PASS
+P_dis within [0, 5.0] kW   : PASS
+P_gimp within [0, 5.0] kW  : PASS
+P_gexp within [0, 5.0] kW  : PASS
+P_curt within [0, P_pv(k)]  : PASS
+No simultaneous ch/dis     : PASS
+--------------------------------------------
+OVERALL RESULT              : PASS
+=============================================
+
+===== Phase 2 Daily Energy & Degradation Summary =====
+PV generated         :  15.28 kWh
+Load consumed        :  35.29 kWh
+Battery charged      :   8.42 kWh
+Battery discharged   :   7.60 kWh
+Grid imported        :  20.83 kWh
+Grid exported        :   0.00 kWh
+PV curtailed         :   0.00 kWh
+-------------------------------------------------------
+Energy cost          : 140.02 Rs
+Export compensation  :   0.00 Rs
+Grid cost (net)      : 140.02 Rs
+Final SOC            :  0.100
+-------------------------------------------------------
+Equivalent Full Cycles (EFC) :  0.801
+Post-hoc degradation cost    :   2.06 Rs
+=========================================================
+```
+

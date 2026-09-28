@@ -24,16 +24,16 @@ $$\min_{x} \sum_{k=1}^{N} C_{\text{grid}}(k) \cdot P_{\text{grid}}(k) \cdot \Del
 $$\text{Subject to: } P_{\text{pv}}(k) + P_{\text{grid}}(k) + P_{\text{batt}}(k) = P_{\text{load}}(k) \quad \forall k$$
 $$E_{\text{batt}}(k) = E_{\text{batt}}(k-1) - P_{\text{batt}}(k) \cdot \Delta T$$
 $$SOC_{\text{min}} \le SOC(k) \le SOC_{\text{max}}$$
-$$-P_{\text{batt\_rated}} \le P_{\text{batt}}(k) \le P_{\text{batt\_rated}}$$
+$$-P_{\text{batt-rated}} \le P_{\text{batt}}(k) \le P_{\text{batt-rated}}$$
 
 ### Optimization Method
 * Solved deterministically using Linear Programming (`linprog` in MATLAB).
 
 ### Battery Health Quantification (Post-Simulation Analysis)
 To prove that this naive optimization degrades battery health rapidly:
-1. Run `linprog` to extract optimal power setpoints $P_{\text{batt\_naive}}(k)$.
-2. Pass $P_{\text{batt\_naive}}(k)$ through a **post-simulation rainflow counting / Depth of Discharge (DoD) degradation model**:
-   $$C_{\text{deg\_naive}} = \sum_{k=1}^{N} \text{Cost}_{\text{replacement}} \times \left( \frac{|P_{\text{batt\_naive}}(k)| \cdot \Delta T}{2 \cdot E_{\text{batt\_max}} \cdot \text{LifeCycles}(\text{DoD})} \right)$$
+1. Run `linprog` to extract optimal power setpoints $P_{\text{batt-naive}}(k)$.
+2. Pass $P_{\text{batt-naive}}(k)$ through a **post-simulation rainflow counting / Depth of Discharge (DoD) degradation model**:
+   $$C_{\text{deg-naive}} = \sum_{k=1}^{N} \text{Cost}_{\text{replacement}} \times \left( \frac{\vert{}P_{\text{batt-naive}}(k)\vert{} \cdot \Delta T}{2 \cdot E_{\text{batt-max}} \cdot \text{LifeCycles}(\text{DoD})} \right)$$
 3. **Expected Outcome:** High financial savings on grid electricity, but extreme battery wear due to aggressive arbitrage during minor price fluctuations.
 
 ---
