@@ -152,7 +152,7 @@ After running `linprog`, the output vectors must pass four sanity checks before 
 
 # Simulation Results
 - Check `system_params.m` , `generate_pv_profile.m` , `generate_load_profile.m` for the data used. 
-![[phase2.png|554]]
+![](phase2.png)
 
 ```
 

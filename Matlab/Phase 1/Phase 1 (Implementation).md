@@ -120,7 +120,7 @@ $$P_{\text{max-load}} \leq P_{max-grid-import}$$
 # Simulation Results
 
 - Check `system_params.m` , `generate_pv_profile.m` , `generate_load_profile.m` for the data used. 
-![[Phase 1.webp|618]]
+![](Phase%201.webp)
 
 ```
 

@@ -75,7 +75,7 @@
 # Simulation Results 
 
 - Check `system_params.m` , `generate_pv_profile.m` , `generate_load_profile.m` for the data used. 
-![[Phase 0.webp|657]]
+![](Phase%200.webp)
 
 ```
 ===== Phase 0 EMS Validation Summary =====
