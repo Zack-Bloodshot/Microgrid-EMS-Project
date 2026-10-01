@@ -26,7 +26,7 @@ function params = system_params()
 
     %% --- Phase 2 battery degradation parameters ---
     % Battery Replacement Cost: total cost to replace the BESS pack.
-    params.Cost_replacement = 250000;  % [Rs] (2.5 lakh rupees)
+    params.Cost_replacement = 130000;  % [Rs] (1.3 lakh rupees)
     % Cycle-life curve: LifeCycles(DoD) = A_cycle * DoD^(-b_cycle)
     params.A_cycle = 3000;             % [-] Cycle-life curve parameter A
     params.b_cycle = 1.3;              % [-] Cycle-life curve parameter b

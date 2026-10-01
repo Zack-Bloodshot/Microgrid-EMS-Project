@@ -7,21 +7,22 @@ function [P_load, time_vec] = generate_load_profile(params)
 
     time_vec = (0:params.N-1) * params.dt;
 
-    % Base household demand
-    P_base = 0.6;
+
 
     % Gaussian load components
     gauss = @(t, A, mu, sigma) ...
         A * exp(-((t - mu).^2) / (2*sigma^2));
 
-    % Load profile:
-    % Morning peak     : 08:00
-    % Afternoon peak   : 14:30
-    % Evening peak     : 19:30
-    P_load = P_base + ...
-        gauss(time_vec, 1.8, 8.0, 1.2) + ...
-        gauss(time_vec, 2.2, 14.5, 0.9) + ...
-        gauss(time_vec, 2.8, 19.5, 1.5);
+% Load profile:
+% Morning peak     : 08:00
+% Afternoon peak   : 16:15
+% Evening peak     : 19:30
+P_base = 0.6;
+
+P_load = P_base + ...
+    gauss(time_vec, 1.8, 8.0, 1.2) + ...
+    gauss(time_vec, 4.0, 16.25, 0.75) + ...
+    gauss(time_vec, 3.0, 19.5, 1.5);
 
     P_load = max(P_load, 0);
 
