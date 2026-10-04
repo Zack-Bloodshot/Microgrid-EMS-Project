@@ -13,24 +13,24 @@ end
 function plot_daily_details(sunny, cloudy)
 %PLOT_DAILY_DETAILS Detailed 24h dispatch plots for all six cases.
 %
-%   Creates a 3x2 grid of subplots (one per case) showing PV vs load,
-%   grid import/export, battery charge/discharge, and SOC. This reveals
-%   why cloudy days save more: less export compensation, more battery
-%   arbitrage value, and higher grid import costs that the battery offsets.
+%   Creates two figure windows (one per scenario) each with three
+%   subplots (baseline, heuristic, LP) showing PV vs load, grid
+%   import/export, and battery charge/discharge.
 
     scenarios = {sunny, cloudy};
     scenario_names = {'Sunny', 'Cloudy'};
     phase_names = {'Baseline', 'Heuristic', 'LP'};
     phase_fields = {'phase0', 'phase1', 'phase2'};
 
-    figure('Name', 'Daily Dispatch Details - Sunny vs Cloudy', ...
-        'Position', [50, 50, 1400, 1000]);
-
     for s = 1:2
         scenario = scenarios{s};
+
+        figure('Name', sprintf('Daily Dispatch Cost - %s', scenario_names{s}), ...
+            'Position', [50 + (s - 1) * 750, 50, 700, 1000]);
+
         for p = 1:3
             phase = scenario.(phase_fields{p});
-            subplot(3, 2, (p - 1) * 2 + s);
+            subplot(3, 1, p);
 
             hold on;
             plot(scenario.time, scenario.P_pv, 'LineWidth', 1.2, ...
@@ -66,7 +66,7 @@ function plot_daily_details(sunny, cloudy)
             end
             hold off;
         end
-    end
 
-    sgtitle('Daily Dispatch: Why Cloudy Days Save More (less export, more battery value)');
+        sgtitle(sprintf('Daily Dispatch Cost - %s', scenario_names{s}));
+    end
 end
