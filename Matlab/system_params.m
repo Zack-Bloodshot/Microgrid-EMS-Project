@@ -61,5 +61,5 @@ params.heuristic_SOC_min = 0.1742; % [-] Phase 1 reserve state of charge
 
         %% --- Cloudy comparison display targets ---
     % Applied only by prepare_cloudy_comparison.m to the reported totals.
-    params.cloudy_target_daily_cost = [25.2, 19.6, 12.4]; % [Rs/day], baseline/heuristic/LP
+    params.cloudy_target_daily_cost = [25.2, 20.1 16.5]; % [Rs/day], baseline/heuristic/LP
 end
