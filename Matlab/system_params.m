@@ -21,6 +21,7 @@ function params = system_params()
     params.SOC0      = 0.1;          % [-] Initial state of charge
     params.SOC_min   = 0.1;          % [-] Minimum state of charge
     params.SOC_max   = 0.9;          % [-] Maximum state of charge
+    params.heuristic_SOC_min = 0.1212; % [-] Phase 1 reserve state of charge
     params.eta_ch    = 0.95;         % [-] Charging efficiency
     params.eta_dis   = 0.95;         % [-] Discharging efficiency
 

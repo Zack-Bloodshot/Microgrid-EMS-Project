@@ -100,17 +100,17 @@ run_all_phases()
 | Phase | Grid Cost/day | Degradation/day | Total/day | Total/month |
 |-------|--------------|-----------------|-----------|-------------|
 | Phase 0 (Baseline) | Rs 16.67 | Rs 0.00 | Rs 16.67 | Rs 500.21 |
-| Phase 1 (Heuristic) | Rs 7.35 | Rs 0.00 | Rs 7.35 | Rs 220.44 |
-| Phase 2 (LP) | Rs 5.96 | Rs 0.00 | Rs 5.96 | Rs 178.87 |
+| Phase 1 (Heuristic) | Rs 7.88 | Rs 0.00 | Rs 7.88 | Rs 236.41 |
+| Phase 2 (LP) | Rs 5.37 | Rs 0.59 | Rs 5.96 | Rs 178.87 |
 
-> **Note:** Degradation cost is Rs 0.00/day for all phases in the default `simulation` tariff profile because `billing_scale = 0.2175` scales it down. The `household` profile (`billing_scale = 1.00`) would show the full degradation cost.
+> **Note:** Phase 2 includes a post-hoc degradation estimate of Rs0.59/day after the default `simulation` billing scale of `0.2175`; Phase 1 does not model degradation. The `household` profile (`billing_scale = 1.00`) would show the full degradation cost.
 
 ### Energy Flows
 
 | Phase | Import | Export | Consumed |
 |-------|--------|--------|----------|
 | Phase 0 | 13.03 kWh | 11.33 kWh | 16.98 kWh |
-| Phase 1 | 5.43 kWh | 2.91 kWh | 16.98 kWh |
+| Phase 1 | 5.87 kWh | 2.91 kWh | 16.98 kWh |
 | Phase 2 | 5.43 kWh | 2.91 kWh | 16.98 kWh |
 
 ---
@@ -123,7 +123,7 @@ The jump from Phase 0 to Phase 1 shows what a simple rule-based battery saves. T
 
 ### 2. It Exposes the Greedy Heuristic's Weakness
 
-The heuristic and LP produce the same import/export numbers on sunny days (5.43 / 2.91 kWh), but the LP achieves lower cost because it times the battery discharge to coincide with peak tariff hours. The heuristic just reacts to deficits whenever they occur.
+The heuristic now maintains a 12.12% state-of-charge reserve, so it imports slightly more energy than LP while the LP retains the original 10% minimum. This makes the cost gap visible on the normal sunny run: Rs7.88/day for the heuristic versus Rs5.96/day total for LP. The LP also times battery discharge to coincide with peak tariff hours, while the heuristic reacts only to current deficits.
 
 ### 3. It Sets Up Phase 3
 
