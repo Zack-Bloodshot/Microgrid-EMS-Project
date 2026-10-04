@@ -17,12 +17,13 @@ function [P_load, time_vec] = generate_load_profile(params)
 % Morning peak     : 08:00
 % Afternoon peak   : 16:15
 % Evening peak     : 19:30
-P_base = 0.6;
+% Scaled to represent a solar-equipped single-family daily demand.
+P_base = 0.264;
 
 P_load = P_base + ...
-    gauss(time_vec, 1.8, 8.0, 1.2) + ...
-    gauss(time_vec, 4.0, 16.25, 0.75) + ...
-    gauss(time_vec, 3.0, 19.5, 1.5);
+    gauss(time_vec, 0.792, 8.0, 1.2) + ...
+    gauss(time_vec, 1.76, 16.25, 0.75) + ...
+    gauss(time_vec, 1.32, 19.5, 1.5);
 
     P_load = max(P_load, 0);
 

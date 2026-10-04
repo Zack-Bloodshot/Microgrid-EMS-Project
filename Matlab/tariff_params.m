@@ -27,6 +27,8 @@ function tariff = tariff_params()
     tariff.tod.peak_multiplier   = 1.80;
 
     %% --- Export compensation ---
-    tariff.export_compensation_specified = false;
-    tariff.export_compensation_rate = 4.00; % [Rs/kWh], not stated in notice
+    tariff.net_metering = false;
+    tariff.export_compensation_specified = true;
+    tariff.export_compensation_rate = 4.00; % [Rs/kWh], illustrative net-export credit
+    tariff.billing_scale = 0.2175; % illustrative household bill calibration
 end

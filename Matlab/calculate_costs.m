@@ -20,9 +20,23 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
     slab_energy = allocate_monthly_slabs(E_gimp_profile, tariff.slab_limits_kWh);
     tod_multiplier = build_tod_multiplier(numel(P_gimp), dt, tariff.tod);
     import_rate = slab_energy.rate .* tod_multiplier;
-    energy_cost = sum(slab_energy.cost .* tod_multiplier);
+    gross_energy_cost = sum(slab_energy.cost .* tod_multiplier);
     export_compensation = E_gexp * tariff.export_compensation_rate;
-    total_cost = energy_cost - export_compensation;
+
+    if tariff.net_metering
+        % Treat this 24-hour profile as a representative billing day:
+        % exported energy offsets imported energy before billing.
+        net_energy = max(E_gimp - E_gexp, 0);
+        net_rate = mean(tariff.slab_effective_rates(1) * tod_multiplier);
+        energy_cost = net_energy * net_rate;
+        export_compensation = 0;
+    else
+        energy_cost = gross_energy_cost;
+    end
+
+    fixed_charge_daily = tariff.fixed_charge / 30;
+    total_cost = tariff.billing_scale * ...
+        (energy_cost - export_compensation + fixed_charge_daily);
 
     cost_results = struct('E_gimp', E_gimp, 'E_gexp', E_gexp, ...
         'energy_cost', energy_cost, ...

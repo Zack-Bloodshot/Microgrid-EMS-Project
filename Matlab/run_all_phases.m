@@ -1,4 +1,4 @@
-function results = run_all_phases()
+    function results = run_all_phases()
 %RUN_ALL_PHASES Run and compare the Phase 0, Phase 1, and Phase 2 EMS runs.
 %
 %   This orchestration function keeps the individual main_phase*.m drivers
@@ -83,14 +83,16 @@ function results = run_all_phases()
     degradation_costs = [results.phase0.degradation_cost, ...
         results.phase1.degradation_cost, results.phase2.degradation_cost];
     total_costs = grid_costs + degradation_costs;
+    monthly_total_costs = 30 * total_costs;
 
     fprintf('\n===== All-Phase Cost Comparison =====\n');
-    fprintf('%-12s %15s %18s %15s\n', ...
-        'Phase', 'Grid cost (Rs)', 'Degradation (Rs)', 'Total (Rs)');
+    fprintf('%-12s %15s %18s %15s %18s\n', ...
+        'Phase', 'Grid/day (Rs)', 'Degradation/day (Rs)', ...
+        'Total/day (Rs)', 'Total/month (Rs)');
     for phase_index = 1:numel(phase_names)
-        fprintf('%-12s %15.2f %18.2f %15.2f\n', phase_names{phase_index}, ...
+        fprintf('%-12s %15.2f %18.2f %15.2f %18.2f\n', phase_names{phase_index}, ...
             grid_costs(phase_index), degradation_costs(phase_index), ...
-            total_costs(phase_index));
+            total_costs(phase_index), monthly_total_costs(phase_index));
     end
     fprintf('=====================================\n');
 
@@ -106,10 +108,10 @@ function results = run_all_phases()
     legend('Grid cost', 'Post-hoc degradation cost', 'Location', 'northwest');
 
     subplot(2, 1, 2);
-    bar(total_costs);
+    bar(monthly_total_costs);
     grid on;
     set(gca, 'XTick', 1:numel(phase_names), 'XTickLabel', phase_names);
     ylabel('Cost [Rs]');
-    title('Total Comparison Cost');
+    title('30-Day Equivalent Household Bill');
     sgtitle('Phase 0 vs. Phase 1 vs. Phase 2');
 end

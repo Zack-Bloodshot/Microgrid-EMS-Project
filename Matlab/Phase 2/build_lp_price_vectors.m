@@ -46,5 +46,11 @@ function [C_import, C_export] = build_lp_price_vectors(N, dt, tariff)
     base_import_rate = tariff.slab_effective_rates(1); % lowest monthly slab
     C_import = base_import_rate * tod_multiplier;
 
-    C_export = tariff.export_compensation_rate * ones(1, N);
+    if tariff.net_metering
+        % Under net metering, exported energy offsets imports at the same
+        % time-of-use value instead of being treated as free energy.
+        C_export = C_import;
+    else
+        C_export = tariff.export_compensation_rate * ones(1, N);
+    end
 end
