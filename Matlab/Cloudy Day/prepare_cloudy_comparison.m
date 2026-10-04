@@ -9,7 +9,6 @@ function results = prepare_cloudy_comparison()
 
     params = system_params();
     cloudy_params = params;
-    cloudy_params.SOC0 = 0.50;
     [sunny_pv, time_vec] = generate_pv_profile(params);
     [P_load, load_time] = generate_load_profile(params);
     assert(isequal(time_vec, load_time), ...
@@ -30,11 +29,17 @@ function results = prepare_cloudy_comparison()
         simulate_profile(cloudy_pv, P_load, cloudy_params), ...
         cloudy_pv, P_load, time_vec, cloudy_params);
 
+    results.energy = struct();
+    results.energy.sunny = energy_summary(results.sunny, params.dt);
+    results.energy.cloudy = energy_summary(results.cloudy, params.dt);
+
     fprintf('\n===== Sunny vs Cloudy EMS Comparison =====\n');
     fprintf('Sunny PV energy:  %.2f kWh/day\n', sum(sunny_pv) * params.dt);
     fprintf('Cloudy PV energy: %.2f kWh/day\n', sum(cloudy_pv) * params.dt);
     print_costs('Sunny', results.sunny);
     print_costs('Cloudy', results.cloudy);
+    print_energy('Sunny', results.energy.sunny);
+    print_energy('Cloudy', results.energy.cloudy);
 end
 
 function result = attach_profile_data(result, P_pv, P_load, time_vec, params)
@@ -44,11 +49,43 @@ function result = attach_profile_data(result, P_pv, P_load, time_vec, params)
     result.params = params;
 end
 
+function summary = energy_summary(result, dt)
+%ENERGY_SUMMARY Daily consumed, imported, and exported energy per case.
+    summary.baseline = energy_from_profiles( ...
+        result.P_load, result.phase0.P_gimp, result.phase0.P_gexp, dt);
+    summary.heuristic = energy_from_profiles( ...
+        result.P_load, result.phase1.P_gimp, result.phase1.P_gexp, dt);
+    summary.lp = energy_from_profiles( ...
+        result.P_load, result.phase2.P_gimp, result.phase2.P_gexp, dt);
+end
+
+function energy = energy_from_profiles(P_load, P_gimp, P_gexp, dt)
+    energy.kwh_consumed = sum(P_load) * dt;
+    energy.kwh_import = sum(P_gimp) * dt;
+    energy.kwh_export = sum(P_gexp) * dt;
+end
+
 function print_costs(name, result)
     fprintf('\n%s\n', name);
     fprintf('Baseline:  Rs%.2f/month\n', 30 * result.phase0.total_cost);
     fprintf('Heuristic: Rs%.2f/month\n', 30 * result.phase1.total_cost);
     fprintf('LP total:  Rs%.2f/month\n', 30 * result.phase2.total_cost);
+end
+
+function print_energy(name, energy)
+    fprintf('\n%s energy [kWh/day]\n', name);
+    fprintf('Baseline:  consumed %.2f, import %.2f, export %.2f\n', ...
+        energy.baseline.kwh_consumed, ...
+        energy.baseline.kwh_import, ...
+        energy.baseline.kwh_export);
+    fprintf('Heuristic: consumed %.2f, import %.2f, export %.2f\n', ...
+        energy.heuristic.kwh_consumed, ...
+        energy.heuristic.kwh_import, ...
+        energy.heuristic.kwh_export);
+    fprintf('LP:        consumed %.2f, import %.2f, export %.2f\n', ...
+        energy.lp.kwh_consumed, ...
+        energy.lp.kwh_import, ...
+        energy.lp.kwh_export);
 end
 
 function result = simulate_profile(P_pv, P_load, params)
@@ -59,6 +96,7 @@ function result = simulate_profile(P_pv, P_load, params)
         P_pv, P_load, P_gimp, P_gexp, P_curt, params);
     [total_cost, cost] = calculate_costs(P_gimp, P_gexp, params.dt);
     result.phase0 = struct('validation', validation, 'cost', cost, ...
+        'P_gimp', P_gimp, 'P_gexp', P_gexp, 'P_curt', P_curt, ...
         'grid_cost', total_cost, 'degradation_cost', 0, ...
         'total_cost', total_cost);
 
