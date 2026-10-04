@@ -3,10 +3,19 @@
 ```
 
 # Inputs:
-
 - $P_{pv}$ (Generated Solar Power at each timestep)
 - $P_{load}$ (Load of the microgrid at each timestep)
 - $tariff$ (Time-of-Day tariff struct with import price vector $C_{import}$ and export credit vector $C_{export}$)
+# Outputs 
+- $P_{ch}$ Power Charged to Battery, $P_{dis}$ Power Discharged from Battery
+- $P_{grid-export}$ Power exported to Grid, $P_{grid-import}$ Power imported from Grid
+- $SOC(k)$ State of charge of battery at each time step
+- $P_{curt}$ Curtailment Tracking (Unused excess energy)
+- $grid\_cost$ Direct monetary cost paid to the utility under ToD tariffs
+- $deg\_cost$ Post-simulation estimated battery degradation cost (unpenalized in solver)
+
+---
+
 
 # Constants to be fixed (inputs)
 
@@ -26,18 +35,6 @@
 | Grid export limit              | $P_{grid,exp}^{max}$                 | Set by net/EXIM metering agreement — `[INSERT VALUE]`             |
 | Battery Replacement Cost       | $Cost_{replacement}$                 | Total cost to replace BESS pack ($)                               |
 | Cycle Life Curve Parameters    | $A, b$                               | Power-law fitting parameters ($LifeCycles = A \cdot DoD^{-b}$)    |
-
-# Outputs 
-- $P_{ch}$ Power Charged to Battery
-- $P_{dis}$ Power Discharged from Battery
-- $P_{grid-export}$ Power exported to Grid
-- $P_{grid-import}$ Power imported from Grid
-- $SOC(k)$ State of charge of battery at each time step
-- $P_{curt}$ Curtailment Tracking (Unused excess energy)
-- $grid\_cost$ Direct monetary cost paid to the utility under ToD tariffs
-- $deg\_cost$ Post-simulation estimated battery degradation cost (unpenalized in solver)
-
----
 
 # Data taken for first pass
 

@@ -2,9 +2,12 @@
 [P_gimp, P_gexp, P_curt] = rule_based_ems(P_pv, P_load, params) %Main thing
 ```
 # Inputs:
-
 - $P_{pv}$ (Generated Solar Power at each timestep) 
 - $P_{load}$ (Load of the microgrid at each timestep) 
+# Outputs 
+- $P_{grid-export}$ Power exported to Grid
+- $P_{grid-import}$ Power imported from Grid
+- $P_{curt}$ Curtailment Tracking (Unused energy) 
 
 # Constants to be fixed (inputs)
 
@@ -14,12 +17,6 @@
 | Time step                   | $\Delta T$           | 0.25 h (project assumption)                                       |
 | Grid import limit           | $P_{grid,imp}^{max}$ | Service-connection dependent — `[INSERT VALUE]`                   |
 | Grid export limit           | $P_{grid,exp}^{max}$ | Set by net/EXIM metering agreement — `[INSERT VALUE]`, see Part 8 |
-
-# Outputs 
-- $P_{grid-export}$ Power exported to Grid
-- $P_{grid-import}$ Power imported from Grid
-- $P_{curt}$ Curtailment Tracking (Unused energy) 
-
 
 # Data taken for first pass
 | Parameter         | Value I gave | Meaning                         | Why                                                             |
