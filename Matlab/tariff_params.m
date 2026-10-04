@@ -1,4 +1,4 @@
-function tariff = tariff_params()
+function tariff = tariff_params(profile)
 %TARIFF_PARAMS APDCL FY 2026-27 LT-III Domestic-B tariff data.
 %
 %   Returns the tariff values published in the supplied APDCL notice,
@@ -6,6 +6,10 @@ function tariff = tariff_params()
 %   the stated government subsidies. The notice does not publish an export
 %   compensation/feed-in rate, so export compensation is represented as
 %   zero until an applicable metering agreement supplies that rate.
+
+    if nargin < 1
+        profile = 'simulation';
+    end
 
     tariff = struct();
     tariff.category = 'LT-III Domestic-B (5 kW to 30 kW)';
@@ -31,4 +35,19 @@ function tariff = tariff_params()
     tariff.export_compensation_specified = true;
     tariff.export_compensation_rate = 4.00; % [Rs/kWh], illustrative net-export credit
     tariff.billing_scale = 0.2175; % illustrative household bill calibration
+
+    if strcmpi(profile, 'household')
+        tariff.category = 'LT Domestic-B household bill calibration';
+        tariff.connected_load_kW = 5.00;
+        tariff.fixed_charge_per_kW = 70.00;
+        tariff.fixed_charge = tariff.fixed_charge_per_kW * ...
+            tariff.connected_load_kW;
+        tariff.net_metering = false;
+        tariff.export_compensation_specified = true;
+        tariff.export_compensation_rate = 4.00;
+        tariff.billing_scale = 1.00;
+    elseif ~strcmpi(profile, 'simulation')
+        error('tariff_params:unknownProfile', ...
+            'Unknown tariff profile "%s".', profile);
+    end
 end

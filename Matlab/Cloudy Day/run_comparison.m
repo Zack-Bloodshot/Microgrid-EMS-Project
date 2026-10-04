@@ -1,6 +1,6 @@
 function results = run_comparison()
-%RUN_COMPARISON Generate the sunny-versus-cloudy cost comparison figure.
+%RUN_COMPARISON Generate the no-battery household comparison figure.
 
-    results = prepare_cloudy_comparison();
-    plot_cost_comparison(results.sunny, results.cloudy);
+    results = prepare_household_baseline();
+    plot_baseline_comparison(results.sunny, results.cloudy);
 end

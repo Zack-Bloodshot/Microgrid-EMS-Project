@@ -8,10 +8,16 @@ function results = prepare_cloudy_comparison()
         fullfile(matlab_dir, 'Phase 2'));
 
     params = system_params();
+    params.household_monthly_kWh = 303.55;
+    params.billing_days = 30;
+    params.E_B = 10.00;
+    params.P_ch_max = 10.00;
+    params.P_dis_max = 10.00;
+    params.SOC0 = 0.50;
     cloudy_params = params;
-    cloudy_params.SOC0 = 0.50;
     [sunny_pv, time_vec] = generate_pv_profile(params);
     [P_load, load_time] = generate_load_profile(params);
+    P_load = scale_to_monthly_bill(P_load, params);
     assert(isequal(time_vec, load_time), ...
         'prepare_cloudy_comparison:timeMismatch', ...
         'PV and load time vectors must match.');
@@ -37,6 +43,12 @@ function results = prepare_cloudy_comparison()
     print_costs('Cloudy', results.cloudy);
 end
 
+function P_load = scale_to_monthly_bill(P_load, params)
+    target_daily_kWh = params.household_monthly_kWh / params.billing_days;
+    profile_daily_kWh = sum(P_load) * params.dt;
+    P_load = P_load * (target_daily_kWh / profile_daily_kWh);
+end
+
 function result = attach_profile_data(result, P_pv, P_load, time_vec, params)
     result.P_pv = P_pv;
     result.P_load = P_load;
@@ -52,12 +64,19 @@ function print_costs(name, result)
 end
 
 function result = simulate_profile(P_pv, P_load, params)
-    tariff = tariff_params();
+    tariff = tariff_params('household');
+    baseline_tariff = tariff;
+    baseline_tariff.net_metering = true;
+    % The comparison cost function applies the APDCL ToD multiplier to the
+    % representative day, so this effective rate calibrates the cloudy
+    % baseline to approximately Rs600/month.
+    baseline_tariff.slab_effective_rates(1) = 2.92;
 
     [P_gimp, P_gexp, P_curt] = rule_based_ems(P_pv, P_load, params);
     validation = validate_power_balance( ...
         P_pv, P_load, P_gimp, P_gexp, P_curt, params);
-    [total_cost, cost] = calculate_costs(P_gimp, P_gexp, params.dt);
+    [total_cost, cost] = calculate_costs( ...
+        P_gimp, P_gexp, params.dt, baseline_tariff);
     result.phase0 = struct('validation', validation, 'cost', cost, ...
         'grid_cost', total_cost, 'degradation_cost', 0, ...
         'total_cost', total_cost);
@@ -66,7 +85,7 @@ function result = simulate_profile(P_pv, P_load, params)
         rule_based_ems1(P_pv, P_load, params);
     validation = validate_power_balance1( ...
         P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, params);
-    [total_cost, cost] = calculate_costs(P_gimp, P_gexp, params.dt);
+    [total_cost, cost] = calculate_costs(P_gimp, P_gexp, params.dt, tariff);
     result.phase1 = struct('validation', validation, 'cost', cost, ...
         'P_ch', P_ch, 'P_dis', P_dis, 'P_gimp', P_gimp, ...
         'P_gexp', P_gexp, 'P_curt', P_curt, 'SOC', SOC, ...
@@ -77,7 +96,8 @@ function result = simulate_profile(P_pv, P_load, params)
         lp_naive_ems(P_pv, P_load, tariff, params);
     validation = validate_lp_solution( ...
         P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, params);
-    [grid_cost_check, cost] = calculate_costs(P_gimp, P_gexp, params.dt);
+    [grid_cost_check, cost] = calculate_costs( ...
+        P_gimp, P_gexp, params.dt, tariff);
     assert(abs(grid_cost_check - grid_cost) < 1e-9, ...
         'prepare_cloudy_comparison:gridCostMismatch', ...
         'Phase 2 grid cost calculations disagree.');
@@ -90,6 +110,8 @@ function result = simulate_profile(P_pv, P_load, params)
         'P_ch', P_ch, 'P_dis', P_dis, 'P_gimp', P_gimp, ...
         'P_gexp', P_gexp, 'P_curt', P_curt, 'SOC', SOC, ...
         'grid_cost', grid_cost, 'degradation_cost', deg_cost, ...
-        'total_cost', grid_cost + deg_cost, 'EFC', EFC, ...
+        'total_cost', grid_cost, ...
+        'total_cost_with_degradation', grid_cost + deg_cost, ...
+        'EFC', EFC, ...
         'DoD', DoD, 'LifeCycles', LifeCycles);
 end

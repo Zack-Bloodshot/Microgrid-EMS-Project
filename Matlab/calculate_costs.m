@@ -1,8 +1,8 @@
-function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
+function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt, tariff_override)
 %CALCULATE_COSTS Calculate monthly import cost, export compensation, and bill.
 %
 %   The imported energy is assigned chronologically to the tariff's monthly
-%   slabs. Each timestep's slab rate is multiplied by its APDCL ToD rate.
+%   slabs. Each timestep's slab rate is multiplied by the APDCL ToD rate.
 
     if ~isequal(size(P_gimp), size(P_gexp))
         error('calculate_costs:dimensionMismatch', ...
@@ -11,7 +11,11 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
     if ~isscalar(dt) || dt <= 0
         error('calculate_costs:invalidTimestep', 'dt must be positive.');
     end
-    tariff = tariff_params();
+    if nargin >= 4
+        tariff = tariff_override;
+    else
+        tariff = tariff_params();
+    end
     E_gimp_profile = P_gimp * dt;
     E_gexp_profile = P_gexp * dt;
     E_gimp = sum(E_gimp_profile);
@@ -41,6 +45,8 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
     cost_results = struct('E_gimp', E_gimp, 'E_gexp', E_gexp, ...
         'energy_cost', energy_cost, ...
         'export_compensation', export_compensation, ...
+        'fixed_charge_daily', fixed_charge_daily, ...
+        'fixed_charge_applied', tariff.billing_scale * fixed_charge_daily, ...
         'total_cost', total_cost, 'import_rate', import_rate, ...
         'slab_energy', slab_energy.energy);
 end

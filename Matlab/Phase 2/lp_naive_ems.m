@@ -156,7 +156,7 @@ function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, grid_cost, deg_cost] = ...
     end
 
     %% ---- 8) Grid monetary cost (accurate slab-based tariff) ----
-    grid_cost = calculate_costs(P_gimp, P_gexp, dt);
+    grid_cost = calculate_costs(P_gimp, P_gexp, dt, tariff);
 
     %% ---- 9) Post-hoc battery degradation cost ----
     deg_cost = battery_degradation(P_ch, P_dis, params);
