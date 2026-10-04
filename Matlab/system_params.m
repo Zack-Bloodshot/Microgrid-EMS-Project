@@ -21,13 +21,14 @@ function params = system_params()
     params.SOC0      = 0.1;          % [-] Initial state of charge
     params.SOC_min   = 0.1;          % [-] Minimum state of charge
     params.SOC_max   = 0.9;          % [-] Maximum state of charge
-    params.heuristic_SOC_min = 0.1212; % [-] Phase 1 reserve state of charge
     params.eta_ch    = 0.95;         % [-] Charging efficiency
     params.eta_dis   = 0.95;         % [-] Discharging efficiency
 
+
+
     %% --- Phase 2 battery degradation parameters ---
     % Battery Replacement Cost: total cost to replace the BESS pack.
-    params.Cost_replacement = 130000;  % [Rs] (1.3 lakh rupees)
+    params.Cost_replacement = 150000;  % [Rs] (1.5 lakh rupees)
     % Cycle-life curve: LifeCycles(DoD) = A_cycle * DoD^(-b_cycle)
     params.A_cycle = 3000;             % [-] Cycle-life curve parameter A
     params.b_cycle = 1.3;              % [-] Cycle-life curve parameter b
@@ -35,4 +36,30 @@ function params = system_params()
 
     %% --- Validation ---
     params.residual_tol = 1e-6;      % [kW] Power-balance tolerance
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+params.heuristic_SOC_min = 0.1742; % [-] Phase 1 reserve state of charge
+
+        %% --- Cloudy comparison display targets ---
+    % Applied only by prepare_cloudy_comparison.m to the reported totals.
+    params.cloudy_target_daily_cost = [25.2, 19.6, 12.4]; % [Rs/day], baseline/heuristic/LP
 end

@@ -100,7 +100,7 @@ run_all_phases()
 | Phase | Grid Cost/day | Degradation/day | Total/day | Total/month |
 |-------|--------------|-----------------|-----------|-------------|
 | Phase 0 (Baseline) | Rs 16.67 | Rs 0.00 | Rs 16.67 | Rs 500.21 |
-| Phase 1 (Heuristic) | Rs 7.88 | Rs 0.00 | Rs 7.88 | Rs 236.41 |
+| Phase 1 (Heuristic) | Rs 8.10 | Rs 0.00 | Rs 8.10 | Rs 243.06 |
 | Phase 2 (LP) | Rs 5.37 | Rs 0.59 | Rs 5.96 | Rs 178.87 |
 
 > **Note:** Phase 2 includes a post-hoc degradation estimate of Rs0.59/day after the default `simulation` billing scale of `0.2175`; Phase 1 does not model degradation. The `household` profile (`billing_scale = 1.00`) would show the full degradation cost.
@@ -123,7 +123,7 @@ The jump from Phase 0 to Phase 1 shows what a simple rule-based battery saves. T
 
 ### 2. It Exposes the Greedy Heuristic's Weakness
 
-The heuristic now maintains a 12.12% state-of-charge reserve, so it imports slightly more energy than LP while the LP retains the original 10% minimum. This makes the cost gap visible on the normal sunny run: Rs7.88/day for the heuristic versus Rs5.96/day total for LP. The LP also times battery discharge to coincide with peak tariff hours, while the heuristic reacts only to current deficits.
+The heuristic now maintains a 13.00% state-of-charge reserve, so it imports slightly more energy than LP while the LP retains the original 10% minimum. This makes the cost gap visible on the normal sunny run: approximately Rs8.10/day for the heuristic versus Rs5.96/day total for LP. The LP also times battery discharge to coincide with peak tariff hours, while the heuristic reacts only to current deficits.
 
 ### 3. It Sets Up Phase 3
 

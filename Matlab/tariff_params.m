@@ -24,7 +24,44 @@ function tariff = tariff_params()
     tariff.tod.peak_hours   = [17, 22]; % 17:00-22:00
     tariff.tod.normal_multiplier = 1.00;
     tariff.tod.solar_multiplier  = 0.80;
-    tariff.tod.peak_multiplier   = 1.80;
+    tariff.tod.peak_multiplier   = 1.60;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     %% --- Export compensation ---
     tariff.net_metering = false;

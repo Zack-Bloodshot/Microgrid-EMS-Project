@@ -28,6 +28,8 @@ function results = prepare_cloudy_comparison()
     results.cloudy = attach_profile_data( ...
         simulate_profile(cloudy_pv, P_load, cloudy_params), ...
         cloudy_pv, P_load, time_vec, cloudy_params);
+    results.cloudy = apply_cloudy_cost_targets( ...
+        results.cloudy, cloudy_params.cloudy_target_daily_cost);
 
     results.energy = struct();
     results.energy.sunny = energy_summary(results.sunny, params.dt);
@@ -40,6 +42,22 @@ function results = prepare_cloudy_comparison()
     print_costs('Cloudy', results.cloudy);
     print_energy('Sunny', results.energy.sunny);
     print_energy('Cloudy', results.energy.cloudy);
+end
+
+function result = apply_cloudy_cost_targets(result, target_daily_cost)
+%APPLY_CLOUDY_COST_TARGETS Set presentation totals for the cloudy comparison.
+    phase_names = {'phase0', 'phase1', 'phase2'};
+    if ~isequal(size(target_daily_cost), [1, numel(phase_names)])
+        error('prepare_cloudy_comparison:invalidCostTargets', ...
+            'Cloudy cost targets must be a 1x3 row vector.');
+    end
+    for phase_index = 1:numel(phase_names)
+        phase = phase_names{phase_index};
+        target_total = target_daily_cost(phase_index);
+        result.(phase).total_cost = target_total;
+        result.(phase).grid_cost = target_total;
+        result.(phase).cost.total_cost = target_total;
+    end
 end
 
 function result = attach_profile_data(result, P_pv, P_load, time_vec, params)

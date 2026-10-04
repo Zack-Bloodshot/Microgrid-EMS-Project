@@ -1,13 +1,5 @@
     function results = run_all_phases()
 %RUN_ALL_PHASES Run and compare the Phase 0, Phase 1, and Phase 2 EMS runs.
-%
-%   This orchestration function keeps the individual main_phase*.m drivers
-%   unchanged. It calls the same shared profile, dispatch, validation, and
-%   cost functions used by those drivers, then plots a cost comparison.
-%
-%   RESULTS contains the dispatch outputs, validation reports, and cost
-%   summaries for each phase.
-
     matlab_dir = fileparts(mfilename('fullpath'));
     addpath(matlab_dir, ...
         fullfile(matlab_dir, 'Phase 0'), ...
