@@ -35,13 +35,7 @@ function [C_import, C_export] = build_lp_price_vectors(N, dt, tariff)
 %     C_import - [1 x N] linear import price [Rs/kWh] at each timestep
 %     C_export - [1 x N] export credit [Rs/kWh] at each timestep
 
-    time_vec = (0:N-1) * dt;
-
-    tod_multiplier = tariff.tod.normal_multiplier * ones(1, N);
-    solar_hours = time_vec >= tariff.tod.solar_hours(1) & time_vec < tariff.tod.solar_hours(2);
-    peak_hours  = time_vec >= tariff.tod.peak_hours(1)  & time_vec < tariff.tod.peak_hours(2);
-    tod_multiplier(solar_hours) = tariff.tod.solar_multiplier;
-    tod_multiplier(peak_hours)  = tariff.tod.peak_multiplier;
+    tod_multiplier = get_tod_multiplier(N, dt, tariff.tod);
 
     base_import_rate = tariff.slab_effective_rates(1); % lowest monthly slab
     C_import = base_import_rate * tod_multiplier;

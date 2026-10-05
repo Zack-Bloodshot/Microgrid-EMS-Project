@@ -18,7 +18,7 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
     E_gexp = sum(E_gexp_profile);
 
     slab_energy = allocate_monthly_slabs(E_gimp_profile, tariff.slab_limits_kWh);
-    tod_multiplier = build_tod_multiplier(numel(P_gimp), dt, tariff.tod);
+    tod_multiplier = get_tod_multiplier(numel(P_gimp), dt, tariff.tod);
     import_rate = slab_energy.rate .* tod_multiplier;
     gross_energy_cost = sum(slab_energy.cost .* tod_multiplier);
     export_compensation = E_gexp * tariff.export_compensation_rate;
@@ -75,11 +75,3 @@ function slab_energy = allocate_monthly_slabs(energy_profile, slab_limits)
     end
 end
 
-function tod_multiplier = build_tod_multiplier(N, dt, tod)
-    time_vec = (0:N-1) * dt;
-    tod_multiplier = tod.normal_multiplier * ones(1, N);
-    solar_hours = time_vec >= tod.solar_hours(1) & time_vec < tod.solar_hours(2);
-    peak_hours = time_vec >= tod.peak_hours(1) & time_vec < tod.peak_hours(2);
-    tod_multiplier(solar_hours) = tod.solar_multiplier;
-    tod_multiplier(peak_hours) = tod.peak_multiplier;
-end

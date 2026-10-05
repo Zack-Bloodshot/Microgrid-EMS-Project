@@ -1,13 +1,60 @@
-function results = run_comparison()
-%RUN_COMPARISON Generate the sunny-versus-cloudy cost comparison figure.
+function plot_comparison(sunny, cloudy)
+%PLOT_COMPARISON Generate all sunny-vs-cloudy comparison plots.
 %
-%   results.energy.sunny.baseline / .heuristic / .lp and
-%   results.energy.cloudy.baseline / .heuristic / .lp each contain
-%   kwh_consumed, kwh_import, and kwh_export for the day.
+%   plot_comparison(sunny, cloudy) creates:
+%     1. Cost comparison figure (daily, monthly, grid costs)
+%     2. Daily dispatch detail figures (PV, load, grid, battery for all phases)
+%
+%   This is the single entry point for all comparison plotting.
+%   For per-phase EMS comparison plots, see plot_ems_comparison.m.
 
-    results = prepare_cloudy_comparison();
-    plot_cost_comparison(results.sunny, results.cloudy);
-    plot_daily_details(results.sunny, results.cloudy);
+    plot_cost_bars(sunny, cloudy);
+    plot_daily_details(sunny, cloudy);
+end
+
+function plot_cost_bars(sunny, cloudy)
+%PLOT_COST_BARS Daily and monthly cost comparison bar charts.
+
+    scenario_names = {'Sunny', 'Cloudy'};
+    phase_names = {'Baseline', 'Heuristic EMS', 'LP EMS'};
+    scenarios = {sunny, cloudy};
+    daily_costs = zeros(2, 3);
+    grid_costs = zeros(2, 3);
+
+    for scenario_index = 1:numel(scenarios)
+        scenario = scenarios{scenario_index};
+        daily_costs(scenario_index, :) = [ ...
+            scenario.phase0.total_cost, ...
+            scenario.phase1.total_cost, ...
+            scenario.phase2.total_cost];
+        grid_costs(scenario_index, :) = [ ...
+            scenario.phase0.grid_cost, ...
+            scenario.phase1.grid_cost, ...
+            scenario.phase2.grid_cost];
+    end
+
+    figure('Name', 'Sunny and Cloudy Cost Comparison', ...
+        'Position', [150, 100, 1100, 700]);
+    subplot(1, 3, 1);
+    grouped_bars(daily_costs, scenario_names, phase_names, ...
+        'Daily total cost', 'Cost [Rs/day]');
+    subplot(1, 3, 2);
+    grouped_bars(30 * daily_costs, scenario_names, phase_names, ...
+        'Monthly total cost', 'Cost [Rs/month]');
+    subplot(1, 3, 3);
+    grouped_bars(grid_costs, scenario_names, phase_names, ...
+        'Daily grid cost', 'Cost [Rs/day]');
+    sgtitle('Cost comparison: sunny vs. cloudy');
+end
+
+function grouped_bars(costs, scenario_names, phase_names, plot_title, y_label)
+    bar(costs);
+    grid on;
+    set(gca, 'XTick', 1:numel(scenario_names), ...
+        'XTickLabel', scenario_names);
+    ylabel(y_label);
+    title(plot_title);
+    legend(phase_names, 'Location', 'northwest');
 end
 
 function plot_daily_details(sunny, cloudy)

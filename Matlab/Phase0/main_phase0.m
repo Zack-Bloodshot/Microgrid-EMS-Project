@@ -19,10 +19,10 @@ assert(isequal(size(P_pv), size(P_load)), ...
     'main_phase0:dimMismatch', 'P_pv and P_load must have identical dimensions.');
 
 %% 2) Run the Phase 0 no-storage EMS
-[P_gimp, P_gexp, P_curt] = rule_based_ems(P_pv, P_load, params);
+[P_gimp, P_gexp, P_curt] = rule_based_ems_p0(P_pv, P_load, params);
 
 %% 3) Validate balance and operating limits
-report = validate_power_balance(P_pv, P_load, P_gimp, P_gexp, P_curt, params);
+report = validate_power_balance_p0(P_pv, P_load, P_gimp, P_gexp, P_curt, params);
 if ~report.all_checks_passed
     warning('main_phase0:validationFailed', ...
         'One or more Phase 0 validation checks failed.');

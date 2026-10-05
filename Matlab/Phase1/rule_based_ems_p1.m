@@ -1,4 +1,4 @@
-function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt] = rule_based_ems1(P_pv, P_load, params)
+function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt] = rule_based_ems_p1(P_pv, P_load, params)
 %RULE_BASED_EMS Phase 1 rule-based Energy Management System dispatch.
 %
 %   [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt] = RULE_BASED_EMS(P_pv, P_load, params)
