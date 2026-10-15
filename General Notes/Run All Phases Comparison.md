@@ -113,7 +113,7 @@ solver output — no value is scaled, tuned, or overwritten after the run.
 |------------|--------------|-----------|
 | Baseline → Heuristic | Rs 20.89 | 41.3% |
 | Baseline → LP | Rs 25.26 | 50.0% |
-| Heuristic → LP | Rs 4.37 | 14.7% |
+| Heuristic → LP | Rs 4.38 | 14.8% |
 
 > **Note:** Phase 1 and Phase 2 both accrue post-hoc degradation cost —
 > the heuristic cycles the battery just as heavily as the LP (EFC 0.801
@@ -130,7 +130,7 @@ solver output — no value is scaled, tuned, or overwritten after the run.
 | Phase 2 | 5.43 kWh | 2.91 kWh | 16.98 kWh |
 
 > **Note:** Phase 1 and Phase 2 move *identical* energy on this day, yet
-> the LP costs Rs 4.37 less. The saving is not from using less grid
+> the LP costs Rs 4.38 less. The saving is not from using less grid
 > energy — it is from **when** that energy is bought. The LP shifts
 > import out of the 1.2× peak window into cheaper hours, which is exactly
 > the ToD arbitrage the battery exists to capture. The heuristic
@@ -150,7 +150,7 @@ The heuristic discharges the battery the instant a deficit appears, with
 no knowledge of the tariff clock. The LP holds charge back and releases
 it during the 1.2× peak window. On this day both end up moving the same
 5.43 kWh of import, but the LP places it at cheaper times and saves
-Rs 4.37/day (14.7%) doing so.
+Rs 4.38/day (14.8%) doing so.
 
 Because the two controllers cycle the battery equally (EFC 0.801 each),
 the entire gap is attributable to dispatch *timing* — which is the cleanest

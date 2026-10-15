@@ -198,6 +198,7 @@ than hidden. None of them are bugs.
 ## Related Notes
 
 - [[README]] — full project architecture
+- [[Simulation Results Report]] — verified results with hourly dispatch data
 - [[Run All Phases Comparison]] — how these parameters drive the all-phase comparison
 - [[Cloudy vs Sunny Comparison]] — how PV profile changes affect results
 - [[Evidence]] — APDCL tariff source documents

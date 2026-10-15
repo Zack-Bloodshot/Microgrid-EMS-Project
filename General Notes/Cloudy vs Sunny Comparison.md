@@ -111,7 +111,7 @@ calibrated, scaled, or substituted after the run.
 | LP | Rs 25.28 | Rs 758.37 | 5.43 kWh | 2.91 kWh |
 
 **LP saves Rs 25.26/day (50.0%) vs baseline.** The heuristic→LP gap is
-Rs 4.37/day (14.7%).
+Rs 4.38/day (14.8%).
 
 ### Cloudy Day
 
@@ -129,7 +129,7 @@ even though the absolute saving is smaller.
 
 Cloudy days cost more overall (less free PV), so every case is worse in
 rupees. But the *optimisation gap* — what foresight is worth — is
-proportionally wider on the cloudy day (15.8% vs 14.7%), because there
+proportionally wider on the cloudy day (15.8% vs 14.8%), because there
 is less free energy to fall back on and dispatch timing matters more.
 
 Note that the cloudy LP imports **more** energy than the heuristic
