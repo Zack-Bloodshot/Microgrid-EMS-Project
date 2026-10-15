@@ -1,23 +1,29 @@
-function results = simulate_day(P_pv, P_load, params)
+function results = simulate_day(P_pv, P_load, params, tariff)
 %SIMULATE_DAY Run all 3 EMS controllers on a given PV/load profile.
 %   results = simulate_day(P_pv, P_load, params) runs Phase 0 (baseline),
 %   Phase 1 (rule-based), and Phase 2 (LP-based) controllers on the given
 %   profiles and returns a struct with phase0, phase1, phase2 results.
 %
+%   results = simulate_day(P_pv, P_load, params, tariff) additionally
+%   uses a caller-supplied tariff struct (see tariff_params overrides).
+%   Intended for sensitivity analysis.
+%
 %   This is the single source of truth for the simulation pipeline.
 %   Callers are responsible for attaching profile data (P_pv, P_load, time)
 %   and any presentation-level adjustments.
 %
-%   See also: run_all_phases, prepare_cloudy_comparison.
+%   See also: run_all_phases, prepare_cloudy_comparison, tariff_params.
 
-    tariff = tariff_params();
+    if nargin < 4
+        tariff = tariff_params();
+    end
 
     %% Phase 0: no-storage baseline
     % Degradation cost is genuinely zero: no battery is present.
     [P_gimp, P_gexp, P_curt] = rule_based_ems_p0(P_pv, P_load, params);
     validation = validate_power_balance_p0( ...
         P_pv, P_load, P_gimp, P_gexp, P_curt, params);
-    [total_cost, cost] = calculate_costs(P_gimp, P_gexp, params.dt);
+    [total_cost, cost] = calculate_costs(P_gimp, P_gexp, params.dt, tariff);
 
     results.phase0 = struct( ...
         'P_gimp', P_gimp, 'P_gexp', P_gexp, 'P_curt', P_curt, ...
@@ -30,7 +36,7 @@ function results = simulate_day(P_pv, P_load, params)
         rule_based_ems_p1(P_pv, P_load, params);
     validation = validate_power_balance_p1( ...
         P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, params);
-    [total_cost, cost] = calculate_costs(P_gimp, P_gexp, params.dt);
+    [total_cost, cost] = calculate_costs(P_gimp, P_gexp, params.dt, tariff);
     [deg_cost, EFC, DoD, LifeCycles] = battery_degradation(P_ch, P_dis, params);
 
     results.phase1 = struct( ...
@@ -51,7 +57,7 @@ function results = simulate_day(P_pv, P_load, params)
     assert(abs(deg_cost_check - deg_cost) < 1e-9, ...
         'simulate_day:degCostMismatch', ...
         'Phase 2 degradation cost calculations disagree.');
-    [grid_cost_check, cost] = calculate_costs(P_gimp, P_gexp, params.dt);
+    [grid_cost_check, cost] = calculate_costs(P_gimp, P_gexp, params.dt, tariff);
     assert(abs(grid_cost_check - grid_cost) < 1e-9, ...
         'simulate_day:gridCostMismatch', ...
         'Phase 2 grid cost calculations disagree.');

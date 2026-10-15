@@ -1,5 +1,12 @@
-function tariff = tariff_params()
+function tariff = tariff_params(overrides)
 %TARIFF_PARAMS APDCL FY 2026-27 LT-III Domestic-B tariff data.
+%
+%   tariff = TARIFF_PARAMS() returns the tariff as published.
+%   tariff = TARIFF_PARAMS(overrides) applies a struct of fields to
+%   override before returning. Supported override keys:
+%     export_rate, peak_multiplier, solar_multiplier, normal_multiplier,
+%     net_metering. Intended for sensitivity analysis only; omitting the
+%   argument reproduces the published tariff exactly.
 %
 %   Returns the tariff values published in the supplied APDCL notice,
 %   effective from 01-Apr-2026. Energy charges are effective tariffs after
@@ -32,4 +39,23 @@ function tariff = tariff_params()
     % tariff value, and is used only for scenario comparison.
     tariff.export_compensation_rate = 4.00; % [Rs/kWh], assumed
     tariff.net_metering = false;
+
+    %% --- Optional overrides (sensitivity analysis) ---
+    if nargin > 0 && ~isempty(overrides)
+        if isfield(overrides, 'export_rate')
+            tariff.export_compensation_rate = overrides.export_rate;
+        end
+        if isfield(overrides, 'peak_multiplier')
+            tariff.tod.peak_multiplier = overrides.peak_multiplier;
+        end
+        if isfield(overrides, 'solar_multiplier')
+            tariff.tod.solar_multiplier = overrides.solar_multiplier;
+        end
+        if isfield(overrides, 'normal_multiplier')
+            tariff.tod.normal_multiplier = overrides.normal_multiplier;
+        end
+        if isfield(overrides, 'net_metering')
+            tariff.net_metering = overrides.net_metering;
+        end
+    end
 end

@@ -1,4 +1,4 @@
-function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
+function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt, tariff)
 %CALCULATE_COSTS Compute grid import cost, export credit, and the daily bill.
 %
 %   Imported energy is assigned chronologically to the tariff's monthly
@@ -9,6 +9,9 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
 %   500 kWh slab boundaries are never reached. The fixed charge is
 %   pro-rated as fixed_charge/30 to express a per-day figure. A
 %   multi-day horizon is required to exercise the upper slabs.
+%
+%   An optional tariff struct may be supplied for sensitivity analysis;
+%   otherwise tariff_params() is used.
 
     if ~isequal(size(P_gimp), size(P_gexp))
         error('calculate_costs:dimensionMismatch', ...
@@ -17,13 +20,16 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
     if ~isscalar(dt) || dt <= 0
         error('calculate_costs:invalidTimestep', 'dt must be positive.');
     end
-    tariff = tariff_params();
+    if nargin < 4
+        tariff = tariff_params();
+    end
     E_gimp_profile = P_gimp * dt;
     E_gexp_profile = P_gexp * dt;
     E_gimp = sum(E_gimp_profile);
     E_gexp = sum(E_gexp_profile);
 
-    slab_energy = allocate_monthly_slabs(E_gimp_profile, tariff.slab_limits_kWh);
+    slab_energy = allocate_monthly_slabs(E_gimp_profile, ...
+        tariff.slab_limits_kWh, tariff.slab_effective_rates);
     tod_multiplier = get_tod_multiplier(numel(P_gimp), dt, tariff.tod);
     import_rate = slab_energy.rate .* tod_multiplier;
     gross_energy_cost = sum(slab_energy.cost .* tod_multiplier);
@@ -50,11 +56,10 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
         'slab_energy', slab_energy.energy);
 end
 
-function slab_energy = allocate_monthly_slabs(energy_profile, slab_limits)
+function slab_energy = allocate_monthly_slabs(energy_profile, slab_limits, slab_rates)
     slab_energy.energy = zeros(size(energy_profile));
     slab_energy.rate = zeros(size(energy_profile));
     slab_energy.cost = zeros(size(energy_profile));
-    slab_rates = tariff_params().slab_effective_rates;
     cumulative_energy = 0;
 
     for k = 1:numel(energy_profile)
