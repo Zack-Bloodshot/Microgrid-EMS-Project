@@ -1,8 +1,7 @@
 function params = system_params()
 %SYSTEM_PARAMS Shared system, simulation, and battery parameters.
 %
-%   Tariff data is provided separately by tariff_params.m. Battery fields
-%   are retained here for Phase 1 and later battery-based phases.
+%   Tariff data is provided separately by tariff_params.m.
 
     %% --- Common PV and grid parameters ---
     params.Ppv_rated      = 3;       % [kW] PV rated power
@@ -10,11 +9,13 @@ function params = system_params()
     params.P_grid_exp_max = 5;      % [kW] Maximum grid export power
 
     %% --- Simulation timing ---
+    % Horizon is a single self-contained representative day. SOC0 is a
+    % boundary condition of that day, not a reset between days.
     params.dt      = 0.25;           % [h] Time step (15 minutes)
     params.T_hours = 24;             % [h] Simulated horizon
     params.N       = round(params.T_hours / params.dt);
 
-    %% --- Phase 1 battery parameters ---
+    %% --- Battery parameters ---
     params.E_B       = 10;           % [kWh] Battery energy capacity
     params.P_ch_max  = 5;            % [kW] Maximum charge power
     params.P_dis_max = 5;            % [kW] Maximum discharge power
@@ -24,42 +25,13 @@ function params = system_params()
     params.eta_ch    = 0.95;         % [-] Charging efficiency
     params.eta_dis   = 0.95;         % [-] Discharging efficiency
 
-
-
-    %% --- Phase 2 battery degradation parameters ---
-    % Battery Replacement Cost: total cost to replace the BESS pack.
-    params.Cost_replacement = 150000;  % [Rs] (1.5 lakh rupees)
+    %% --- Battery degradation parameters ---
+    params.Cost_replacement = 130000; % [Rs] Total cost to replace the BESS pack
     % Cycle-life curve: LifeCycles(DoD) = A_cycle * DoD^(-b_cycle)
-    params.A_cycle = 3000;             % [-] Cycle-life curve parameter A
-    params.b_cycle = 1.3;              % [-] Cycle-life curve parameter b
+    params.A_cycle = 3000;            % [-] Cycle-life curve parameter A
+    params.b_cycle = 1.3;             % [-] Cycle-life curve parameter b
 
-
-    %% --- Validation ---
-    params.residual_tol = 1e-6;      % [kW] Power-balance tolerance
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-params.heuristic_SOC_min = 0.1742; % [-] Phase 1 reserve state of charge
-
-        %% --- Cloudy comparison display targets ---
-    % Applied only by prepare_cloudy_comparison.m to the reported totals.
-    params.cloudy_target_daily_cost = [25.2, 20.1 16.5]; % [Rs/day], baseline/heuristic/LP
+    %% --- Validation tolerances ---
+    params.residual_tol = 1e-6;       % [kW] Power-balance tolerance
+    params.bound_tol    = 1e-9;       % [-] Slack for SOC and power bound checks
 end

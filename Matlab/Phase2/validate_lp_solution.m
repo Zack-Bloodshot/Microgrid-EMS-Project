@@ -47,7 +47,7 @@ function report = validate_lp_solution(P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp
     report.residual_ok  = all(residual < tol);
 
     %% 2) SOC bounds
-    soc_tol = 1e-9;
+    soc_tol = params.bound_tol;
     soc_violations = find(SOC < params.SOC_min - soc_tol | SOC > params.SOC_max + soc_tol);
     report.soc_violations = soc_violations;
     report.soc_ok = isempty(soc_violations);
@@ -75,22 +75,18 @@ function report = validate_lp_solution(P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp
         report.curt_limit_ok && report.no_simultaneous_ok;
 
     %% Print summary
-    fprintf('\n===== Phase 2 LP EMS Validation Summary =====\n');
-    fprintf('Timesteps simulated        : %d\n', N);
-    fprintf('Solver convergence          : %s (enforced in lp_naive_ems.m)\n', pass_fail(true));
-    fprintf('Max power balance residual : %.3e (tol = %.1e) -> %s\n', ...
+    fprintf('\nPhase 2 LP EMS Validation (N = %d)\n', N);
+    fprintf('  Max power balance residual : %.3e (tol = %.1e) -> %s\n', ...
         report.max_residual, tol, pass_fail(report.residual_ok));
-    fprintf('SOC within [%.2f, %.2f]     : %s\n', ...
+    fprintf('  SOC within [%.2f, %.2f]     : %s\n', ...
         params.SOC_min, params.SOC_max, pass_fail(report.soc_ok));
-    fprintf('P_ch within [0, %.1f] kW    : %s\n', params.P_ch_max, pass_fail(report.ch_limit_ok));
-    fprintf('P_dis within [0, %.1f] kW   : %s\n', params.P_dis_max, pass_fail(report.dis_limit_ok));
-    fprintf('P_gimp within [0, %.1f] kW  : %s\n', params.P_grid_imp_max, pass_fail(report.gimp_limit_ok));
-    fprintf('P_gexp within [0, %.1f] kW  : %s\n', params.P_grid_exp_max, pass_fail(report.gexp_limit_ok));
-    fprintf('P_curt within [0, P_pv(k)]  : %s\n', pass_fail(report.curt_limit_ok));
-    fprintf('No simultaneous ch/dis     : %s\n', pass_fail(report.no_simultaneous_ok));
-    fprintf('--------------------------------------------\n');
-    fprintf('OVERALL RESULT              : %s\n', pass_fail(report.all_checks_passed));
-    fprintf('=============================================\n\n');
+    fprintf('  P_ch within [0, %.1f] kW    : %s\n', params.P_ch_max, pass_fail(report.ch_limit_ok));
+    fprintf('  P_dis within [0, %.1f] kW   : %s\n', params.P_dis_max, pass_fail(report.dis_limit_ok));
+    fprintf('  P_gimp within [0, %.1f] kW  : %s\n', params.P_grid_imp_max, pass_fail(report.gimp_limit_ok));
+    fprintf('  P_gexp within [0, %.1f] kW  : %s\n', params.P_grid_exp_max, pass_fail(report.gexp_limit_ok));
+    fprintf('  P_curt within [0, P_pv(k)]  : %s\n', pass_fail(report.curt_limit_ok));
+    fprintf('  No simultaneous ch/dis     : %s\n', pass_fail(report.no_simultaneous_ok));
+    fprintf('  OVERALL: %s\n\n', pass_fail(report.all_checks_passed));
 
 end
 

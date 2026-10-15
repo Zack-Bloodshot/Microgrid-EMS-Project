@@ -1,5 +1,5 @@
-function [P_gimp, P_gexp, P_curt] = rule_based_ems(P_pv, P_load, params)
-%RULE_BASED_EMS Phase 0 no-storage rule-based dispatch.
+function [P_gimp, P_gexp, P_curt] = rule_based_ems_p0(P_pv, P_load, params)
+%RULE_BASED_EMS_P0 Phase 0 no-storage dispatch.
 %
 %   PV serves the load first. A surplus is exported up to the grid export
 %   limit and the remainder is curtailed. A deficit is supplied by grid

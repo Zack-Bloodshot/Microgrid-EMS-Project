@@ -4,38 +4,21 @@ function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, grid_cost, deg_cost] = ...
 %
 %   [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, grid_cost, deg_cost] = ...
 %       LP_NAIVE_EMS(P_pv, P_load, tariff, params)
-%   solves the Phase 2 naive (degradation-unaware) linear program
-%   exactly as specified in phase_2_implementation.md, using MATLAB's
-%   linprog:
+%   solves the Phase 2 naive (degradation-unaware) linear program using
+%   MATLAB's linprog:
 %
-%     - Objective (Section 2): minimize total grid energy cost under
-%       ToD import/export prices, with NO degradation penalty in the
-%       objective (degradation cost is a post-hoc, Section "Post-
-%       Simulation Battery Degradation Quantification" calculation only).
-%     - Power balance equality constraints (Section 3).
+%     - Objective: minimize total grid energy cost under ToD
+%       import/export prices. No degradation penalty is applied; the
+%       degradation cost is a post-hoc calculation only.
+%     - Power balance equality constraints.
 %     - SOC recursion / operational bounds via a cumulative-sum
-%       inequality formulation (Section 4).
-%     - Decision variable bounds (Section 5).
+%       inequality formulation.
+%     - Decision variable bounds.
 %
-%   Decision vector layout:
-%   Section 1 of the documentation defines the stacked decision vector
-%   as x = [P_grid,imp(1:N); P_grid,exp(1:N); P_ch(1:N); P_dis(1:N)].
-%   The Section 3 power-balance equation itself, however, explicitly
-%   includes a P_curt(k) term:
-%
-%       P_grid,imp(k) - P_grid,exp(k) + P_dis(k) - P_ch(k) - P_curt(k)
-%           = P_load(k) - P_pv(k)
-%
-%   which the abbreviated "matrix mapping" note omits. Treating that
-%   equation with only 4 variables would make P_curt structurally
-%   identically zero (it could never be nonzero), silently defeating
-%   the purpose of tracking curtailment. This implementation therefore
-%   extends the decision vector to x in R^(5N) by appending P_curt(1:N)
-%   as a bounded decision variable (0 <= P_curt(k) <= P_pv(k)), which
-%   makes the literal Section 3 equation solvable as written while
-%   leaving every other equation, bound, and the objective function
-%   completely unchanged (P_curt carries zero cost coefficient, so it
-%   is only ever used by the solver when physically necessary).
+%   Decision vector layout: x = [P_gimp(1:N); P_gexp(1:N); P_ch(1:N);
+%   P_dis(1:N); P_curt(1:N)]. P_curt is carried as an explicit bounded
+%   decision variable (0 <= P_curt(k) <= P_pv(k)) so that curtailment is
+%   visible in the solution; it carries zero cost coefficient.
 %
 %   Inputs:
 %     P_pv    - [1 x N] PV generation at each timestep [kW]
@@ -54,8 +37,14 @@ function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, grid_cost, deg_cost] = ...
 %                 the full ToD tariff (Rs), computed via calculate_costs.m
 %                 on the resulting P_gimp/P_gexp profiles
 %     deg_cost  - scalar, post-simulation estimated battery degradation
-%                 cost (Rs), unpenalized in the solver (Section
-%                 "Post-Simulation Battery Degradation Quantification")
+%                 cost (Rs), unpenalized in the solver
+%
+%   Note: SOC(N+1) is deliberately left unconstrained. The horizon is a
+%   single self-contained day whose SOC0 is a given boundary condition,
+%   so the end-of-day SOC is an outcome rather than a free variable. This
+%   must be revisited if the horizon ever spans multiple days, or if PV
+%   generation runs late enough into the evening to bank energy against
+%   the horizon edge.
 
     N  = params.N;
     dt = params.dt;

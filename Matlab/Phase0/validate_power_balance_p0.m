@@ -14,14 +14,12 @@ function report = validate_power_balance(P_pv, P_load, P_gimp, P_gexp, P_curt, p
     report.all_checks_passed = report.residual_ok && ...
         report.gimp_limit_ok && report.gexp_limit_ok;
 
-    fprintf('\n===== Phase 0 EMS Validation Summary =====\n');
-    fprintf('Timesteps simulated        : %d\n', params.N);
-    fprintf('Max power balance residual : %.3e -> %s\n', ...
+    fprintf('\nPhase 0 Validation (N = %d)\n', params.N);
+    fprintf('  Max power balance residual : %.3e -> %s\n', ...
         report.max_residual, pass_fail(report.residual_ok));
-    fprintf('Grid import within limit   : %s\n', pass_fail(report.gimp_limit_ok));
-    fprintf('Grid export within limit   : %s\n', pass_fail(report.gexp_limit_ok));
-    fprintf('OVERALL RESULT              : %s\n', pass_fail(report.all_checks_passed));
-    fprintf('============================================\n\n');
+    fprintf('  Grid import within limit   : %s\n', pass_fail(report.gimp_limit_ok));
+    fprintf('  Grid export within limit   : %s\n', pass_fail(report.gexp_limit_ok));
+    fprintf('  OVERALL: %s\n\n', pass_fail(report.all_checks_passed));
 end
 
 function text = pass_fail(flag)

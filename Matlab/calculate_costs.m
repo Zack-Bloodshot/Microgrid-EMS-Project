@@ -1,8 +1,14 @@
 function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
-%CALCULATE_COSTS Calculate monthly import cost, export compensation, and bill.
+%CALCULATE_COSTS Compute grid import cost, export credit, and the daily bill.
 %
-%   The imported energy is assigned chronologically to the tariff's monthly
-%   slabs. Each timestep's slab rate is multiplied by its APDCL ToD rate.
+%   Imported energy is assigned chronologically to the tariff's monthly
+%   slabs, and each timestep's slab rate is multiplied by its ToD rate.
+%
+%   The horizon here is a single representative day (~17 kWh), so in
+%   practice all import falls in the first monthly slab and the 300 kWh /
+%   500 kWh slab boundaries are never reached. The fixed charge is
+%   pro-rated as fixed_charge/30 to express a per-day figure. A
+%   multi-day horizon is required to exercise the upper slabs.
 
     if ~isequal(size(P_gimp), size(P_gexp))
         error('calculate_costs:dimensionMismatch', ...
@@ -35,8 +41,7 @@ function [total_cost, cost_results] = calculate_costs(P_gimp, P_gexp, dt)
     end
 
     fixed_charge_daily = tariff.fixed_charge / 30;
-    total_cost = tariff.billing_scale * ...
-        (energy_cost - export_compensation + fixed_charge_daily);
+    total_cost = energy_cost - export_compensation + fixed_charge_daily;
 
     cost_results = struct('E_gimp', E_gimp, 'E_gexp', E_gexp, ...
         'energy_cost', energy_cost, ...
