@@ -41,6 +41,14 @@
 
 # Data taken for first pass
 
+> [!warning] Historical values — superseded
+> This table records the **original first-pass parameter guesses**, not the
+> values the code actually runs on. For the authoritative, currently-used
+> values see [[System Parameters & Tariff]]. Key differences:
+> `Ppv_rated` 5 → **3 kW**, `SOC0` 0.2 → **0.1**, `η_ch`/`η_dis` 1 → **0.95**,
+> grid import/export limits 4 → **5 kW**, `Cost_replacement` 2.5 lakh → **Rs 1,30,000**,
+> ToD peak multiplier 1.8 → **1.2** (per the APDCL FY2026-27 notice).
+
 | Parameter          |        Value I gave | Meaning                                   | Why                                          |
 | ------------------ | ------------------: | ----------------------------------------- | -------------------------------------------- |
 | `Ppv_rated`        |            **5 kW** | Maximum rated PV output                   | A small, manageable PV system for simulation |

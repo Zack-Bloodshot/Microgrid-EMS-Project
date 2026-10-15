@@ -47,7 +47,7 @@ related:
 | Charge efficiency | $\eta_{ch}$ | 0.95 | — |
 | Discharge efficiency | $\eta_{dis}$ | 0.95 | — |
 
-### Battery Degradation (Phase 2)
+### Battery Degradation (Phase 1 and Phase 2)
 
 | Parameter | Symbol | Value | Unit |
 |-----------|--------|-------|------|
@@ -57,11 +57,16 @@ related:
 
 Cycle-life curve: $LifeCycles(DoD) = A_{cycle} \times DoD^{-b_{cycle}}$
 
+Degradation is reported post-hoc for **both** battery phases. Phase 1
+cycles the battery just as heavily as Phase 2, so charging it only to
+Phase 2 would understate the heuristic's true cost.
+
 ### Validation
 
 | Parameter | Value | Unit |
 |-----------|-------|------|
-| Residual tolerance | $10^{-6}$ | kW |
+| Residual tolerance (`residual_tol`) | $10^{-6}$ | kW |
+| Bound tolerance (`bound_tol`) | $10^{-9}$ | — |
 
 ---
 
@@ -79,21 +84,23 @@ Cycle-life curve: $LifeCycles(DoD) = A_{cycle} \times DoD^{-b_{cycle}}$
 
 ### Energy Slabs
 
-| Monthly Slab | Effective Rate | Full Cost Rate |
-|-------------|---------------|----------------|
-| 0–300 kWh | Rs 6.75/kWh | Rs 7.74/kWh |
-| 300–500 kWh | Rs 6.95/kWh | Rs 7.74/kWh |
-| 500+ kWh | Rs 7.74/kWh | Rs 7.74/kWh |
+| Monthly Slab | Effective Rate |
+|-------------|---------------|
+| 0–300 kWh | Rs 6.75/kWh |
+| 300–500 kWh | Rs 6.95/kWh |
+| 500+ kWh | Rs 7.74/kWh |
 
-> **Note:** Effective rates are after government subsidies. Full cost rates are the pre-subsidy rates published in the tariff notice.
+> **Note:** Effective rates are after government subsidies, as published in the APDCL FY2026-27 notice.
 
 ### Time-of-Day (ToD) Multipliers
 
 | Period | Hours | Multiplier | Effective Rate (Slab 1) |
 |--------|-------|-----------|------------------------|
 | Solar hours | 09:00–17:00 | 0.80× | Rs 5.40/kWh |
-| Peak hours | 17:00–22:00 | 1.80× | Rs 12.15/kWh |
+| Peak hours | 17:00–22:00 | 1.20× | Rs 8.10/kWh |
 | Normal hours | 22:00–09:00 | 1.00× | Rs 6.75/kWh |
+
+> **Source:** APDCL FY2026-27 tariff notice — solar hours are billed at 80% of normal energy charges, peak hours at 120%.
 
 ### Export Compensation
 
@@ -102,16 +109,7 @@ Cycle-life curve: $LifeCycles(DoD) = A_{cycle} \times DoD^{-b_{cycle}}$
 | Export compensation rate | 4.00 | Rs/kWh |
 | Net metering | No | — |
 
-> **Note:** The APDCL notice does not publish a feed-in rate. Rs 4.00/kWh is an illustrative value for net-export credit.
-
-### Billing Scale
-
-| Profile | `billing_scale` | Fixed Charge | Use Case |
-|---------|----------------|--------------|----------|
-| `simulation` | 0.2175 | Rs 70/month | Calibrated household bill |
-| `household` | 1.00 | Rs 350/month | Full bill (5 kW × Rs 70/kW) |
-
-> **Note:** `billing_scale` is a calibration multiplier applied to the final cost. It is not a real tariff parameter — it scales the simulated bill to match a representative household. See [[Run All Phases Comparison]] for discussion.
+> **Assumption, not a tariff value.** The APDCL notice publishes no feed-in rate. Rs 4.00/kWh is a project assumption used for scenario comparison and is labelled as such in `tariff_params.m`. It is *not* a sourced figure.
 
 ---
 
@@ -120,14 +118,15 @@ Cycle-life curve: $LifeCycles(DoD) = A_{cycle} \times DoD^{-b_{cycle}}$
 The `calculate_costs()` function applies the tariff in this order:
 
 1. **Slab allocation** — imported energy is assigned chronologically to monthly slabs (0–300, 300–500, 500+)
-2. **ToD multipliers** — each timestep's slab rate is multiplied by the ToD factor (0.8× / 1.0× / 1.8×)
-3. **Export compensation** — exported energy earns Rs 4.00/kWh
+2. **ToD multipliers** — each timestep's slab rate is multiplied by the ToD factor (0.8× / 1.0× / 1.2×)
+3. **Export compensation** — exported energy credited at the assumed Rs 4.00/kWh
 4. **Fixed charge** — Rs 70/month ÷ 30 = Rs 2.33/day
-5. **Billing scale** — multiplied by 0.2175 (simulation profile)
 
 ### Formula
 
-$$Total = billing\_scale \times \left( \sum_{k=1}^{N} \left[ slab\_rate(k) \times ToD(k) \times P_{imp}(k) \times \Delta t \right] - E_{exp} \times 4.00 + \frac{70}{30} \right)$$
+$$Total = \sum_{k=1}^{N} \left[ slab\_rate(k) \times ToD(k) \times P_{imp}(k) \times \Delta t \right] - E_{exp} \times 4.00 + \frac{70}{30}$$
+
+No calibration or scaling factor is applied to the result. Every figure the project reports is the raw tariff computation.
 
 ---
 
@@ -154,7 +153,45 @@ The sunny PV profile is a smooth curve peaking around midday, scaled to the 3 kW
 | Scenario | Daily PV Energy |
 |----------|----------------|
 | Sunny | 15.28 kWh |
-| Cloudy | 7.52 kWh |
+| Cloudy | 6.94 kWh |
+
+---
+
+## Known Limitations
+
+These are properties of the current daily-horizon scope, stated rather
+than hidden. None of them are bugs.
+
+1. **Monthly slabs are never exercised.** A representative day imports
+   ~13 kWh, so every kWh falls in the first 300 kWh slab. The slab
+   allocator is correct but effectively inert at this scale. Crossing the
+   300 kWh boundary needs ~23 days of consumption, so a monthly horizon
+   is required to make the 2nd and 3rd slabs meaningful.
+
+2. **Monthly figures are extrapolated, not simulated.** "Total/month" is
+   30 × the simulated day. Real consumption is seasonal and
+   day-to-day variable, so this understates winter bills and overstates
+   any day-to-day variance effects.
+
+3. **Fixed charge is pro-rated.** Rs 70/month ÷ 30 approximates a daily
+   share. It is a small, flat term and does not affect the comparison
+   between phases.
+
+4. **`net_metering` branch is dead code.** `tariff.net_metering` is
+   `false`, so the net-metering path in `calculate_costs.m` never runs. It
+   is retained for a future tariff scenario, not for the current results.
+
+5. **Terminal SOC is unconstrained in the LP.** Acceptable for a single
+   self-contained day whose `SOC0` is a given boundary condition, and no
+   exploit is available because PV generation ends at 18:00, leaving no
+   late-day energy to bank against the horizon edge. This must be
+   revisited if the horizon ever spans multiple days or the PV window
+   shifts later into the evening.
+
+6. **PV and load profiles are parametric.** `generate_pv_profile.m` is a
+   shaped cosine and `generate_load_profile.m` is a sum of Gaussians,
+   scaled to the LT-III Domestic-B band. They are representative, not
+   measured. The cloudy case is a stated attenuation of the sunny case.
 
 ---
 
