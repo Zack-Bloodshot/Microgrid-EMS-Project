@@ -1,0 +1,17 @@
+# Video build artefacts (generated, not source)
+/video/
+
+# Accidental literal-tilde directory: contains junctions to the user home dir
+/~/
+
+# Binary deliverables (source of truth lives elsewhere, too large for git)
+*.docx
+*.pptx
+
+# MATLAB scratch
+*.asv
+*.fig
+*.mlapp
+*.slx
+*.mdl
+*.mat
