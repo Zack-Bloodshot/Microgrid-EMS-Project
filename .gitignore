@@ -8,6 +8,9 @@
 *.docx
 *.pptx
 
+# Personal preparation notes - kept local, not part of the project repo
+/EMS Project — Placement Interview Prep.md
+
 # MATLAB scratch
 *.asv
 *.fig
