@@ -19,30 +19,56 @@ related:
 
 > [!info] Provenance
 > Every figure in this note is direct output from `run_all_phases()` and
-> `prepare_cloudy_comparison()` on branch `real-simulation` @ `6a27a28`.
+> `prepare_cloudy_comparison()` on branch `real-simulation`.
 > Nothing is hand-entered, scaled, or substituted after the run. MATLAB
 > R2024b, `N = 96` timesteps at `dt = 0.25 h`.
+>
+> **Two views are reported throughout.** *Grid cost* is electricity
+> charge only — the basis used by most published EMS comparisons.
+> *Total cost* adds post-hoc battery degradation at Rs 43.33 per
+> equivalent full cycle. The distinction matters: see §1 and §4.
 
 ---
 
 ## 1. Headline Result
 
-On the sunny day, adding an optimised EMS cuts the electricity bill by
-**half**.
+On the sunny day, an optimised EMS cuts the **electricity bill** by half —
+and beats a greedy rule by ~15%. But once battery wear is priced, the
+picture changes, and that change is the most interesting result here.
 
-| Phase | Controller | Grid/day | Degradation/day | **Total/day** | Total/month | EFC |
-|-------|-----------|----------|-----------------|---------------|-------------|-----|
-| 0 | Baseline (no battery) | Rs 50.54 | Rs 0.00 | **Rs 50.54** | Rs 1516.10 | 0.000 |
-| 1 | Heuristic (greedy) | Rs 28.97 | Rs 0.68 | **Rs 29.65** | Rs 889.63 | 0.801 |
-| 2 | LP (optimised) | Rs 24.69 | Rs 0.59 | **Rs 25.28** | Rs 758.37 | 0.801 |
+### Grid cost (electricity charge only — the published-comparison basis)
+
+| Phase | Controller | Grid/day | Total/month | EFC |
+|-------|-----------|----------|-------------|-----|
+| 0 | Baseline (no battery) | Rs 50.54 | Rs 1516.10 | 0.000 |
+| 1 | Heuristic (greedy) | Rs 28.97 | Rs 869.19 | 0.801 |
+| 2 | LP (optimised) | Rs 24.69 | Rs 740.57 | 0.801 |
+
+### Total cost (including battery degradation)
+
+| Phase | Grid/day | Degradation/day | Total/day | Total/month |
+|-------|----------|-----------------|-----------|-------------|
+| 0 | Rs 50.54 | Rs 0.00 | **Rs 50.54** | Rs 1516.10 |
+| 1 | Rs 28.97 | Rs 34.71 | **Rs 63.69** | Rs 1910.55 |
+| 2 | Rs 24.69 | Rs 34.71 | **Rs 59.40** | Rs 1781.94 |
 
 ### Savings
 
-| Comparison | Daily saving | Reduction |
-|------------|--------------|-----------|
-| Baseline → Heuristic | Rs 20.88 | **41.3%** |
-| Baseline → LP | Rs 25.26 | **50.0%** |
-| Heuristic → LP | Rs 4.38 | **14.8%** |
+| Comparison | Basis | Daily saving | Reduction |
+|------------|-------|--------------|-----------|
+| Baseline → Heuristic | Grid | Rs 21.57 | 42.7% |
+| Baseline → LP | Grid | Rs 25.85 | 51.2% |
+| Heuristic → LP | Grid | Rs 4.29 | **14.8%** |
+| Heuristic → LP | **Total** | Rs 4.29 | **6.7%** |
+
+> [!warning] Read the two tables together
+> The battery cuts the electricity bill by **half** — that part is solid
+> and matches published literature. But at Rs 130,000 with a 10-year life,
+> the battery **costs more than no battery at all** (Rs 59.40 vs Rs
+> 50.54/day). It saves Rs 25.85/day of electricity while costing
+> Rs 34.71/day in wear. This is not a failure — it is the commercial
+> reality, and it is what motivates a degradation-aware EMS. See
+> [[Defensibility Analysis]] §6.
 
 All three phases pass power-balance and operating-limit validation with
 max residual `4.441e-16 kW` against a `1e-6 kW` tolerance.
@@ -88,13 +114,13 @@ Full bill reconstruction (both verified against `calculate_costs`):
 | Export credit (2.909 kWh × Rs 4.00) | − Rs 11.6377 | − Rs 11.6377 |
 | Fixed charge (Rs 70/30) | + Rs 2.3333 | + Rs 2.3333 |
 | **Grid cost** | **Rs 28.9729** | **Rs 24.6857** |
-| Post-hoc degradation | + Rs 0.6813 | + Rs 0.5933 |
-| **Total** | **Rs 29.6542** | **Rs 25.2790** |
+| Post-hoc degradation (EFC 0.801 × Rs 43.33) | + Rs 34.71 | + Rs 34.71 |
+| **Total** | **Rs 63.68** | **Rs 59.40** |
 
-Note the total saving (Rs 4.38) is slightly larger than the grid saving
-(Rs 4.29): Phase 1 carries Rs 0.09 *more* degradation cost despite
-cycling identically, because its discharge is spread over more, smaller
-episodes rather than two deep ones.
+Both controllers carry **identical** degradation cost (same EFC), so the
+grid-cost saving of Rs 4.29 passes straight through to the total. On this
+day the LP's advantage is pure timing, with no degradation penalty either
+way.
 
 This is the cleanest possible demonstration that the optimisation does
 real work: both controllers cycle the battery identically hard, so the
@@ -158,47 +184,64 @@ optimiser reserves it for the most expensive deficit it knows is coming.
 
 ---
 
-## 4. Cloudy Day
+## 4. Cloudy Day — Where the Result Reverses
 
 Cloudy PV: **6.942 kWh** (peak 1.80 kW) vs sunny 15.279 kWh — 45% of
 available solar.
 
-| Case | Grid/day | Degradation/day | Total/day | Total/month | Import | Export | EFC |
-|------|----------|-----------------|-----------|--------------|--------|--------|-----|
-| Baseline | Rs 87.14 | Rs 0.00 | **Rs 87.14** | Rs 2614.22 | 14.679 kWh | 4.640 kWh | 0.000 |
-| Heuristic | Rs 79.47 | Rs 0.25 | **Rs 79.71** | Rs 2391.37 | 10.492 kWh | 0.00 kWh | 0.441 |
-| LP | Rs 66.37 | Rs 0.75 | **Rs 67.11** | Rs 2013.40 | 10.823 kWh | 0.00 kWh | 0.765 |
+### Grid cost
 
-### Savings
+| Case | Grid/day | Import | Export | EFC |
+|------|----------|--------|--------|-----|
+| Baseline | Rs 87.14 | 14.679 kWh | 4.640 kWh | 0.000 |
+| Heuristic | Rs 79.47 | 10.492 kWh | 0.00 kWh | 0.441 |
+| LP | Rs 66.37 | 10.823 kWh | 0.00 kWh | 0.765 |
 
-| Comparison | Daily saving | Reduction |
-|------------|--------------|-----------|
-| Baseline → Heuristic | Rs 7.43 | 8.5% |
-| Baseline → LP | Rs 20.03 | **23.0%** |
-| Heuristic → LP | Rs 12.60 | **15.8%** |
+**On grid cost alone the LP wins by 16.48%** — slightly *more* than on
+the sunny day (14.80%). Less free solar means dispatch timing matters
+more.
 
-### Two findings worth noting
+### Total cost
 
-**1. The optimisation gap widens on cloudy days.** Heuristic → LP is
-15.8% on the cloudy day versus 14.8% on the sunny day. With less free
-solar to fall back on, dispatch timing matters *more*, not less.
+| Case | Grid/day | Degradation/day | Total/day |
+|------|----------|-----------------|-----------|
+| Baseline | Rs 87.14 | Rs 0.00 | **Rs 87.14** |
+| Heuristic | Rs 79.47 | Rs 19.13 | **Rs 98.59** |
+| LP | Rs 66.37 | Rs 33.14 | **Rs 99.50** |
 
-**2. The LP grid-charges; the heuristic structurally cannot.** On the
-cloudy day the LP buys **1.519 kWh from the grid across 2 timesteps**
-during cheap solar hours to charge the battery. The heuristic only ever
-charges from PV surplus — it has no foresight, so on a scarce-PV day it
-never fills the battery (EFC 0.441 vs 0.765).
+> [!danger] The naive LP loses on total cost
+> **Heuristic Rs 98.59 vs LP Rs 99.50 — the LP is 0.92% worse.**
+>
+> The LP buys Rs 13.10 less electricity but cycles 1.7× harder (EFC 0.765
+> vs 0.441) and pays Rs 14.01 more in degradation. The electricity saving
+> does not quite cover the extra wear.
 
-Note the LP imports *more* energy than the heuristic (10.823 vs 10.492
-kWh) yet costs Rs 12.60 less. Again: **when**, not **how much**.
+This is the most valuable result in the project. The degradation-unaware
+LP is **over-cycling to chase marginal savings that its own battery cost
+consumes.** This is precisely the failure mode a degradation-aware
+objective is designed to fix, and it is now demonstrated with numbers
+rather than asserted.
 
-### The cost of that advantage
+### The capability the heuristic lacks
 
-The LP cycles roughly 1.7× harder and incurs **3× the degradation cost**
-(Rs 0.75 vs Rs 0.25/day). It still wins by a wide margin, but this is
-exactly the cost-versus-degradation tension that motivates a
-degradation-aware Phase 3 — the naive LP is not penalised for the
-throughput it adds.
+On the cloudy day the LP buys **1.519 kWh from the grid across 2
+timesteps** during cheap solar hours to charge the battery. The greedy
+rule only ever charges from PV surplus — it has no foresight, so on a
+scarce-PV day it never fills the battery (EFC 0.441 vs 0.765).
+
+That grid-charging capability is real and worth keeping. The problem is
+purely that the LP pays for it in battery life, and its objective
+function is blind to that cost.
+
+### Net position
+
+| Basis | Heuristic | LP | LP advantage |
+|-------|-----------|----|--------------|
+| Grid cost | Rs 79.47 | Rs 66.37 | **+16.48%** |
+| Total cost | Rs 98.59 | Rs 99.50 | **−0.92%** |
+
+The grid-cost view matches the published literature. The total-cost view
+shows where the naive optimisation breaks down. Both are worth reporting.
 
 ---
 

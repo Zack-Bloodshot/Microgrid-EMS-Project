@@ -102,40 +102,52 @@ On a sunny day with the LP controller, grid import drops from 13.03 kWh to 5.43 
 All figures are direct `prepare_cloudy_comparison()` output. Nothing is
 calibrated, scaled, or substituted after the run.
 
+**Grid cost** is the electricity charge alone — the basis used by most
+published EMS comparisons. **Total cost** adds battery degradation at
+Rs 43.33 per equivalent full cycle.
+
 ### Sunny Day
 
-| Case | Cost/day | Cost/month (×30) | Grid Import | Grid Export |
-|------|----------|------------------|-------------|-------------|
-| Baseline | Rs 50.54 | Rs 1516.10 | 13.03 kWh | 11.33 kWh |
-| Heuristic | Rs 29.65 | Rs 889.63 | 5.43 kWh | 2.91 kWh |
-| LP | Rs 25.28 | Rs 758.37 | 5.43 kWh | 2.91 kWh |
+| Case | Grid/day | Degr./day | Total/day | Grid Import | Grid Export |
+|------|----------|-----------|-----------|-------------|-------------|
+| Baseline | Rs 50.54 | Rs 0.00 | Rs 50.54 | 13.03 kWh | 11.33 kWh |
+| Heuristic | Rs 28.97 | Rs 34.71 | Rs 63.69 | 5.43 kWh | 2.91 kWh |
+| LP | Rs 24.69 | Rs 34.71 | Rs 59.40 | 5.43 kWh | 2.91 kWh |
 
-**LP saves Rs 25.26/day (50.0%) vs baseline.** The heuristic→LP gap is
-Rs 4.38/day (14.8%).
+**On grid cost the LP saves Rs 25.85/day (51.2%) vs baseline**, and beats
+the heuristic by Rs 4.29/day (14.8%).
 
 ### Cloudy Day
 
-| Case | Cost/day | Cost/month (×30) | Grid Import | Grid Export |
-|------|----------|------------------|-------------|-------------|
-| Baseline | Rs 87.14 | Rs 2614.20 | 14.68 kWh | 4.64 kWh |
-| Heuristic | Rs 79.71 | Rs 2391.30 | 10.49 kWh | 0.00 kWh |
-| LP | Rs 67.11 | Rs 2013.30 | 10.82 kWh | 0.00 kWh |
+| Case | Grid/day | Degr./day | Total/day | Grid Import | Grid Export |
+|------|----------|-----------|-----------|-------------|-------------|
+| Baseline | Rs 87.14 | Rs 0.00 | Rs 87.14 | 14.68 kWh | 4.64 kWh |
+| Heuristic | Rs 79.47 | Rs 19.13 | Rs 98.59 | 10.49 kWh | 0.00 kWh |
+| LP | Rs 66.37 | Rs 33.14 | Rs 99.50 | 10.82 kWh | 0.00 kWh |
 
-**LP saves Rs 20.03/day (23.0%) vs baseline.** The heuristic→LP gap is
-Rs 12.60/day (15.8%) — proportionally *larger* than on the sunny day,
-even though the absolute saving is smaller.
+**On grid cost the LP saves Rs 20.77/day (23.8%) vs baseline**, and beats
+the heuristic by Rs 13.10/day (16.5%).
 
-### Key Insight
+### Key Insight — and where the naive LP breaks
 
-Cloudy days cost more overall (less free PV), so every case is worse in
-rupees. But the *optimisation gap* — what foresight is worth — is
-proportionally wider on the cloudy day (15.8% vs 14.8%), because there
-is less free energy to fall back on and dispatch timing matters more.
+On **grid cost**, the optimisation gap is *wider* on the cloudy day
+(16.5%) than the sunny day (14.8%). Less free solar means dispatch timing
+matters more. The cloudy LP imports **more** energy than the heuristic
+(10.82 vs 10.49 kWh) yet buys it Rs 13.10 more cheaply — it buys at cheap
+hours and avoids expensive ones. Total energy is not the objective; *when*
+it is bought is.
 
-Note that the cloudy LP imports **more** energy than the heuristic
-(10.82 vs 10.49 kWh) yet still costs **Rs 12.60 less**. It buys that
-extra kWh at cheap hours and avoids expensive ones. Total energy is not
-the objective; *when* it is bought is.
+> [!danger] On total cost, the cloudy-day LP LOSES
+> **Heuristic Rs 98.59 vs LP Rs 99.50 — the LP is 0.92% worse.**
+>
+> The LP saves Rs 13.10 of electricity but cycles 1.7x harder (EFC 0.765
+> vs 0.441) and pays Rs 14.01 more in degradation. The electricity saving
+> does not cover the extra wear.
+>
+> This is the project's most valuable finding: **the degradation-unaware
+> LP over-cycles to chase savings its own battery cost consumes.** It is
+> the clearest possible motivation for a degradation-aware Phase 3, and it
+> is demonstrated with numbers rather than asserted.
 
 ### Why the Heuristic Underperforms on Cloudy Days
 
@@ -147,9 +159,10 @@ timesteps in the cloudy case) and discharge during expensive ones. That
 is a capability the heuristic structurally does not have.
 
 It costs the LP something, though: it cycles harder (EFC 0.765 vs the
-heuristic's 0.441) and incurs 3× the degradation cost (Rs 0.75 vs Rs
-0.25 per day). It still wins overall, but this is exactly the
-cost-vs-degradation tension that motivates a degradation-aware Phase 3.
+heuristic's 0.441) and incurs Rs 33.14/day in degradation against the
+heuristic's Rs 19.13. On the sunny day both cycle identically so there is
+no penalty either way; on the cloudy day the extra cycling is what flips
+the result.
 
 ---
 

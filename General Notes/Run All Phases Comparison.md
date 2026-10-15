@@ -104,22 +104,26 @@ solver output — no value is scaled, tuned, or overwritten after the run.
 | Phase | Grid Cost/day | Degradation/day | Total/day | Total/month | EFC |
 |-------|--------------|-----------------|-----------|-------------|-----|
 | Phase 0 (Baseline) | Rs 50.54 | Rs 0.00 | Rs 50.54 | Rs 1516.10 | 0.000 |
-| Phase 1 (Heuristic) | Rs 28.97 | Rs 0.68 | Rs 29.65 | Rs 889.63 | 0.801 |
-| Phase 2 (LP) | Rs 24.69 | Rs 0.59 | Rs 25.28 | Rs 758.37 | 0.801 |
+| Phase 1 (Heuristic) | Rs 28.97 | Rs 34.71 | Rs 63.69 | Rs 1910.55 | 0.801 |
+| Phase 2 (LP) | Rs 24.69 | Rs 34.71 | Rs 59.40 | Rs 1781.94 | 0.801 |
 
 **Savings vs. the no-battery baseline:**
 
 | Comparison | Daily saving | Reduction |
 |------------|--------------|-----------|
-| Baseline → Heuristic | Rs 20.89 | 41.3% |
-| Baseline → LP | Rs 25.26 | 50.0% |
-| Heuristic → LP | Rs 4.38 | 14.8% |
+| Baseline → Heuristic | Rs 21.57 | **42.7%** |
+| Baseline → LP | Rs 25.85 | **51.2%** |
+| Heuristic → LP (grid cost) | Rs 4.29 | **14.8%** |
 
 > **Note:** Phase 1 and Phase 2 both accrue post-hoc degradation cost —
-> the heuristic cycles the battery just as heavily as the LP (EFC 0.801
-> each). Phase 0 has no battery, so its degradation cost is genuinely zero.
-> All costs are unscaled APDCL tariff values; no billing calibration
-> factor is applied.
+> on this day they cycle identically (EFC 0.801 each), so both carry
+> Rs 34.71/day. Phase 0 has no battery, so its degradation cost is
+> genuinely zero. All costs are unscaled APDCL tariff values; no billing
+> calibration factor is applied.
+>
+> **Note:** on total cost the battery is *more expensive than no battery*
+> (Rs 59.40 vs Rs 50.54/day), because degradation against Rs 130,000
+> CAPEX exceeds the electricity it saves. See [[Defensibility Analysis]] §6.
 
 ### Energy Flows
 
