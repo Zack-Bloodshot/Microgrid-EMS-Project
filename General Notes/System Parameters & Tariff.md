@@ -52,7 +52,7 @@ related:
 | Parameter | Symbol | Value | Unit |
 |-----------|--------|-------|------|
 | Replacement cost | $C_{rep}$ | 130,000 | Rs |
-| Cycle-life coefficient | $A_{cycle}$ | 3000 | — |
+| Cycle-life coefficient | $A_{cycle}$ | 5000 | — |
 | Cycle-life exponent | $b_{cycle}$ | 1.3 | — |
 
 Cycle-life curve: $LifeCycles(DoD) = A_{cycle} \times DoD^{-b_{cycle}}$
@@ -60,6 +60,16 @@ Cycle-life curve: $LifeCycles(DoD) = A_{cycle} \times DoD^{-b_{cycle}}$
 Degradation is reported post-hoc for **both** battery phases. Phase 1
 cycles the battery just as heavily as Phase 2, so charging it only to
 Phase 2 would understate the heuristic's true cost.
+
+### Battery Degradation (Phase 3, DoD-aware)
+
+| Parameter | Symbol | Value | Unit |
+|-----------|--------|-------|------|
+| Rated depth of discharge | $DoD_{rated}$ | 0.80 | — |
+| Rated cycle life at $DoD_{rated}$ | $N_{cycles,rated}$ | 5000 | cycles |
+| Throughput cost | $c_{deg}$ | 1.6250 | Rs/kWh |
+| Cost per rated 80%-DoD cycle | | 26.00 | Rs |
+| Cost per equivalent full cycle | | 32.50 | Rs |
 
 ### Validation
 

@@ -1,12 +1,16 @@
-function results = simulate_day(P_pv, P_load, params, tariff)
-%SIMULATE_DAY Run all 3 EMS controllers on a given PV/load profile.
+function results = simulate_day(P_pv, P_load, params, tariff, alpha)
+%SIMULATE_DAY Run all 4 EMS controllers on a given PV/load profile.
 %   results = simulate_day(P_pv, P_load, params) runs Phase 0 (baseline),
-%   Phase 1 (rule-based), and Phase 2 (LP-based) controllers on the given
-%   profiles and returns a struct with phase0, phase1, phase2 results.
+%   Phase 1 (rule-based), Phase 2 (LP-based), and Phase 3 (degradation-aware
+%   LP) controllers on the given profiles and returns a struct with phase0,
+%   phase1, phase2, and phase3 results.
 %
 %   results = simulate_day(P_pv, P_load, params, tariff) additionally
 %   uses a caller-supplied tariff struct (see tariff_params overrides).
 %   Intended for sensitivity analysis.
+%
+%   results = simulate_day(P_pv, P_load, params, tariff, alpha) sets the
+%   Phase 3 degradation weight alpha (dimensionless, default 1).
 %
 %   This is the single source of truth for the simulation pipeline.
 %   Callers are responsible for attaching profile data (P_pv, P_load, time)
@@ -14,9 +18,17 @@ function results = simulate_day(P_pv, P_load, params, tariff)
 %
 %   See also: run_all_phases, prepare_cloudy_comparison, tariff_params.
 
-    if nargin < 4
+    if nargin < 4 || isempty(tariff)
         tariff = tariff_params();
     end
+    if nargin < 5 || isempty(alpha)
+        alpha = 1;
+    end
+
+    % Phase 3 functions live in a subfolder; make the pipeline callable
+    % without requiring every caller to manage the path.
+    matlab_dir = fileparts(mfilename('fullpath'));
+    addpath(fullfile(matlab_dir, 'Phase3'));
 
     %% Phase 0: no-storage baseline
     % Degradation cost is genuinely zero: no battery is present.
@@ -68,5 +80,32 @@ function results = simulate_day(P_pv, P_load, params, tariff)
         'validation', validation, 'cost', cost, ...
         'grid_cost', grid_cost, 'degradation_cost', deg_cost, ...
         'total_cost', grid_cost + deg_cost, 'EFC', EFC, ...
-        'DoD', DoD, 'LifeCycles', LifeCycles);
+        'DoD', DoD, 'LifeCycles', LifeCycles, ...
+        'degradation_model', 'legacy 100% DoD, 5000 cycles');
+
+    %% Phase 3: degradation-aware LP with the DoD-aware wear model
+    [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, grid_cost, deg_cost, ...
+        objective_value] = ...
+        lp_degradation_aware_ems(P_pv, P_load, tariff, params, alpha);
+    validation = validate_phase3_solution( ...
+        P_pv, P_load, P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, params);
+    [deg_cost_check, EFC, DoD, LifeCycles] = ...
+        battery_degradation_dod(P_ch, P_dis, params);
+    assert(abs(deg_cost_check - deg_cost) < 1e-9, ...
+        'simulate_day:phase3DegCostMismatch', ...
+        'Phase 3 degradation cost calculations disagree.');
+    [grid_cost_check, cost] = calculate_costs(P_gimp, P_gexp, params.dt, tariff);
+    assert(abs(grid_cost_check - grid_cost) < 1e-9, ...
+        'simulate_day:phase3GridCostMismatch', ...
+        'Phase 3 grid cost calculations disagree.');
+
+    results.phase3 = struct( ...
+        'P_ch', P_ch, 'P_dis', P_dis, 'P_gimp', P_gimp, ...
+        'P_gexp', P_gexp, 'P_curt', P_curt, 'SOC', SOC, ...
+        'validation', validation, 'cost', cost, ...
+        'grid_cost', grid_cost, 'degradation_cost', deg_cost, ...
+        'total_cost', grid_cost + deg_cost, 'EFC', EFC, ...
+        'DoD', DoD, 'LifeCycles', LifeCycles, ...
+        'alpha', alpha, 'objective_value', objective_value, ...
+        'degradation_model', validation.degradation_model);
 end

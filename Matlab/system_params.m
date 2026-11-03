@@ -27,9 +27,16 @@ function params = system_params()
 
     %% --- Battery degradation parameters ---
     params.Cost_replacement = 130000; % [Rs] Total cost to replace the BESS pack
+
+    % Legacy Phase 2 throughput model (100% DoD).
     % Cycle-life curve: LifeCycles(DoD) = A_cycle * DoD^(-b_cycle)
-    params.A_cycle = 3000;            % [-] Cycle-life curve parameter A
+    params.A_cycle = 5000;            % [-] Cycle-life curve parameter A
     params.b_cycle = 1.3;             % [-] Cycle-life curve parameter b
+
+    % Phase 3 DoD-aware model. Rated life is 5000 cycles at the usable
+    % depth-of-discharge window (SOC_max - SOC_min = 0.80), not at 100% DoD.
+    params.DoD_rated      = params.SOC_max - params.SOC_min; % [-] 0.80
+    params.N_cycles_rated = 5000;     % [cycles] rated life at DoD_rated
 
     %% --- Validation tolerances ---
     params.residual_tol = 1e-6;       % [kW] Power-balance tolerance

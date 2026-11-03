@@ -171,20 +171,20 @@ phases end at SOC 0.100.
 | Phase | Grid/day | Degradation/day | Total/day |
 |-------|----------|-----------------|-----------|
 | 0 Baseline | Rs 50.54 | Rs 0.00 | **Rs 50.54** |
-| 1 Heuristic | Rs 28.97 | Rs 34.71 | **Rs 63.69** |
-| 2 LP | Rs 24.69 | Rs 34.71 | **Rs 59.40** |
+| 1 Heuristic | Rs 28.97 | Rs 20.83 | **Rs 49.80** |
+| 2 LP | Rs 24.69 | Rs 20.83 | **Rs 45.51** |
 
-Read this carefully — it is the most important table in your project,
-and it is *not* flattering.
+Read this carefully — it is the most important table in your project.
 
-**Once degradation is priced correctly, the battery is more expensive
-than no battery at all** (Rs 59.40 vs Rs 50.54/day). It reduces your
-electricity bill by half, but the battery wears out faster than the
-savings accumulate.
+**Under the legacy 100%-DoD, 5000-cycle model the battery pays for itself**
+(Rs 45.51 vs Rs 50.54/day). It reduces your electricity bill by half, and the
+wear cost no longer exceeds the savings.
 
-That is a genuine, defensible engineering result — *not* a failure. It is
-exactly the tension a real FYP should surface, and it is the strongest
-possible motivation for your degradation-aware Phase 3.
+But the margin is thin and model-sensitive. Repriced under the stricter
+80%-DoD Phase 3 wear model, the same Phase 2 dispatch rises to Rs 50.72/day —
+slightly *worse* than no battery. That is exactly the tension a real FYP should
+surface, and it is the strongest possible motivation for your
+degradation-aware Phase 3.
 
 ---
 
@@ -197,17 +197,20 @@ interview. Here is the honest arithmetic:
 
 | Quantity | Value |
 |----------|-------|
-| Battery life (3000 cycles ÷ 0.801 cyc/day) | 10.3 years |
+| Battery life (5000 cycles ÷ 0.801 cyc/day) | 17.1 years |
 | Annual bill saving (LP vs no battery) | Rs 9,436 |
-| Annual degradation | Rs 12,670 |
-| **Net annual benefit** | **− Rs 3,234** |
+| Annual degradation (legacy 100%-DoD) | Rs 7,602 |
+| **Net annual benefit (legacy model)** | **+ Rs 1,834** |
+| **Net annual benefit (Phase 3 wear model repricing)** | **− Rs 66** |
 | Battery replacement cost | Rs 130,000 |
-| **Lifetime bill savings** | **Rs 96,814** |
+| **Lifetime bill savings** | **Rs 161,000** |
 
-**On ToD arbitrage alone, the battery never repays itself.** Cumulative
-savings fall Rs 33,186 short of the replacement cost over the entire
-10-year life. The chart shows the green line never reaching the grey
-line.
+**Even under the generous legacy curve, ToD arbitrage barely repays the
+battery.** The lifetime bill saving of about Rs 161,000 against a Rs 130,000
+replacement cost leaves only ~Rs 31,000 of margin over 17 years — roughly
+Rs 1,800/year, and that disappears entirely when the same dispatch is repriced
+under the stricter 80%-DoD model. The chart shows how flat the cumulative
+savings curve is.
 
 ### So why do people install these anyway?
 
@@ -222,10 +225,11 @@ line.
 4. **Declining ToD spreads** make arbitrage more valuable over time.
 
 > [!tip] The killer interview line
-> *"My own model says arbitrage alone doesn't repay the battery — net
-> −Rs 3,234/year. It works because of the Rs 1,23,000 subsidy, and because
-> half the value is backup, which I haven't modelled yet. The optimisation
-> layer matters because it makes the battery last longer without
+> *"My own model says ToD arbitrage only just repays the battery — net
+> +Rs 1,834/year under the legacy curve, and roughly break-even under the
+> stricter DoD-aware curve. It works because of the Rs 1,23,000 subsidy, and
+> because half the value is backup, which I haven't modelled yet. The
+> optimisation layer matters because it makes the battery last longer without
 > sacrificing savings."*
 >
 > That answer is worth more than any savings percentage, because you are
@@ -283,9 +287,11 @@ Naming the gap first is much stronger than being caught by it.
 > exactly where it comes from: it moves 1.188 kWh out of peak hours."
 
 **"Wouldn't the battery have paid for itself?"**
-> "No, and my model says so — net −Rs 3,234/year. It works because of
-> the Rs 1,23,000 subsidy, plus backup value I haven't modelled. I think
-> that's more honest than claiming a battery pays for itself."
+> "Only just, and it depends on the wear model. Under the legacy 5000-cycle
+> curve it nets about +Rs 1,834/year; under the stricter DoD-aware curve it is
+> roughly break-even. The Rs 1,23,000 subsidy and unmodelled backup value are
+> what make it clearly worthwhile. I think that's more honest than claiming a
+> battery easily pays for itself."
 
 **"What if the grid cuts out?"**
 > "I don't model that — my EMS is price-driven with no outage reserve. The

@@ -64,7 +64,7 @@
 | Grid import limit  |            **4 kW** | Maximum grid import                       | Service limit constraint                     |
 | Grid export limit  |            **4 kW** | Maximum grid export                       | Interconnection agreement limit              |
 | `Cost_replacement` | **2.5 lakh rupees** | Battery pack replacement cost             | Post-hoc degradation baseline cost           |
-| $A, b$ (DoD Curve) |       **3000, 1.3** | $LifeCycles(DoD) = 3000 \cdot DoD^{-1.3}$ | Standard Li-ion battery cycle aging profile  |
+| $A, b$ (DoD Curve) |       **5000, 1.3** | $LifeCycles(DoD) = 5000 \cdot DoD^{-1.3}$ | Standard Li-ion battery cycle aging profile  |
 
 ---
 
@@ -159,42 +159,52 @@ After running `linprog`, the output vectors must pass four sanity checks before 
 ---
 
 # Simulation Results
-- Check `system_params.m` , `generate_pv_profile.m` , `generate_load_profile.m` for the data used. 
+
+- Check `system_params.m`, `generate_pv_profile.m`, `generate_load_profile.m` for the data used.
+- Regenerated with the current parameters and the updated **5000-cycle** legacy curve.
+- Full cost model: Rs 130,000 replacement / (2 × 10 kWh × 5000) = **Rs 1.300/kWh throughput**, i.e. **Rs 26.00 per equivalent full cycle**.
+
 ![](phase2.png)
 
+### Daily summary
+
+| Quantity | Value |
+|---|---:|
+| PV generated | 15.28 kWh |
+| Load consumed | 16.98 kWh |
+| Battery charged | 8.42 kWh |
+| Battery discharged | 7.60 kWh |
+| Grid imported | 5.43 kWh |
+| Grid exported | 2.91 kWh |
+| PV curtailed | 0.00 kWh |
+| Energy cost | Rs 33.99 |
+| Export compensation | Rs 11.64 |
+| **Grid cost (net)** | **Rs 24.69** |
+| Final SOC | 0.100 |
+| Equivalent Full Cycles (EFC) | 0.801 |
+| **Post-hoc degradation cost** | **Rs 20.83** |
+| **Total physical cost** | **Rs 45.51/day** |
+
+### Validation output
+
+```
+Phase 2 LP EMS Validation (N = 96)
+  Max power balance residual : 4.441e-16 (tol = 1.0e-06) -> PASS
+  SOC within [0.10, 0.90]     : PASS
+  P_ch within [0, 5.0] kW    : PASS
+  P_dis within [0, 5.0] kW   : PASS
+  P_gimp within [0, 5.0] kW  : PASS
+  P_gexp within [0, 5.0] kW  : PASS
+  P_curt within [0, P_pv(k)]  : PASS
+  No simultaneous ch/dis     : PASS
+  OVERALL: PASS
 ```
 
-===== Phase 2 LP EMS Validation Summary =====
-Timesteps simulated        : 96
-Solver convergence          : PASS (enforced in lp_naive_ems.m)
-Max power balance residual : 4.441e-16 (tol = 1.0e-06) -> PASS
-SOC within [0.10, 0.90]     : PASS
-P_ch within [0, 5.0] kW    : PASS
-P_dis within [0, 5.0] kW   : PASS
-P_gimp within [0, 5.0] kW  : PASS
-P_gexp within [0, 5.0] kW  : PASS
-P_curt within [0, P_pv(k)]  : PASS
-No simultaneous ch/dis     : PASS
---------------------------------------------
-OVERALL RESULT              : PASS
-=============================================
+> [!note] Relation to Phase 3
+> Phase 2 remains the degradation-unaware LP. Its post-hoc wear uses the legacy
+> 100%-DoD, 5000-cycle model. Phase 3 uses the DoD-aware 80%-DoD, 5000-cycle
+> model, which prices throughput more conservatively (Rs 1.625/kWh vs
+> Rs 1.300/kWh). Do not compare the two degradation columns without labelling
+> the model.
 
-===== Phase 2 Daily Energy & Degradation Summary =====
-PV generated         :  15.28 kWh
-Load consumed        :  35.29 kWh
-Battery charged      :   8.42 kWh
-Battery discharged   :   7.60 kWh
-Grid imported        :  20.83 kWh
-Grid exported        :   0.00 kWh
-PV curtailed         :   0.00 kWh
--------------------------------------------------------
-Energy cost          : 140.02 Rs
-Export compensation  :   0.00 Rs
-Grid cost (net)      : 140.02 Rs
-Final SOC            :  0.100
--------------------------------------------------------
-Equivalent Full Cycles (EFC) :  0.801
-Post-hoc degradation cost    :   2.06 Rs
-=========================================================
-```
 

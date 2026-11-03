@@ -114,6 +114,10 @@ title('Per-Timestep Depth-of-Discharge Stress (post-hoc)');
 
 sgtitle('Phase 2: LP-Based Naive EMS - 24h Cost-Only Optimization');
 
+% Save the figure so phase_2_implementation.md and phase2.png stay current.
+exportgraphics(gcf, fullfile(phase_dir, 'phase2.png'), 'Resolution', 150);
+savefig(gcf, fullfile(phase_dir, 'phase2.fig'));
+
 %% 8) Console summary of key daily energy totals and costs
 E_pv_total    = sum(P_pv)    * params.dt;
 E_load_total  = sum(P_load)  * params.dt;

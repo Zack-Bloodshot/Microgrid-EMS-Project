@@ -29,7 +29,7 @@ set(gca, 'XTickLabel', {'Phase 0\nBaseline', 'Phase 1\nHeuristic', 'Phase 2\nLP'
 ylabel('Daily cost [Rs/day]'); ylim([0 75]);
 legend('Grid energy cost', 'Battery degradation', 'Location', 'northwest');
 title({'Daily cost breakdown (sunny day)', ...
-    'Degradation priced at Rs 43.33 per equivalent full cycle'});
+    'Degradation priced at Rs 26.00 per equivalent full cycle'});
 print(f, fullfile(outdir, 'cost-breakdown.png'), '-dpng', '-r150'); close(f);
 end
 
@@ -138,20 +138,20 @@ r = simulate_day(pp, pl, p, tariff_params());
 cpl = p.Cost_replacement / p.A_cycle;
 annual_save = (r.phase0.grid_cost - r.phase2.grid_cost) * 365;
 annual_deg   = r.phase2.EFC * cpl * 365;
-years = 0:1:12;
+years = 0:1:20;
 
 f = figure('Visible', 'off', 'Color', 'w', 'Position', [100 100 860 520]);
 plot(years, annual_save * years, 'LineWidth', 2.2, 'Color', [0.00 0.55 0.25]); hold on;
 plot(years, annual_deg * years, 'LineWidth', 2.2, 'Color', [0.75 0.20 0.15]);
 plot(years, annual_save * years - annual_deg * years, 'LineWidth', 2.4, 'Color', [0.00 0.35 0.70]);
-plot([0 12], [p.Cost_replacement p.Cost_replacement], '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 1.6);
+plot([0 20], [p.Cost_replacement p.Cost_replacement], '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 1.6);
 yline(0, 'k-');
-grid on; xlim([0 12]);
+grid on; xlim([0 20]);
 xlabel('Years'); ylabel('Cumulative value [Rs]');
 legend('Cumulative bill savings', 'Cumulative battery degradation', ...
     'Net benefit', 'Battery replacement cost', 'Location', 'northwest');
 title({'Cumulative economics over battery life', ...
-    sprintf('Life %.1f yr - arbitrage alone does NOT repay the battery', ...
+    sprintf('Life %.1f yr - legacy arbitrage margin is thin', ...
     p.A_cycle / (r.phase2.EFC * 365))});
 print(f, fullfile(outdir, 'breakeven.png'), '-dpng', '-r150'); close(f);
 end

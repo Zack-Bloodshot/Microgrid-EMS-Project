@@ -16,25 +16,27 @@ function plot_cost_bars(sunny, cloudy)
 %PLOT_COST_BARS Daily and monthly cost comparison bar charts.
 
     scenario_names = {'Sunny', 'Cloudy'};
-    phase_names = {'Baseline', 'Heuristic EMS', 'LP EMS'};
+    phase_names = {'Baseline', 'Heuristic EMS', 'LP naive', 'LP aware'};
     scenarios = {sunny, cloudy};
-    daily_costs = zeros(2, 3);
-    grid_costs = zeros(2, 3);
+    daily_costs = zeros(2, 4);
+    grid_costs = zeros(2, 4);
 
     for scenario_index = 1:numel(scenarios)
         scenario = scenarios{scenario_index};
         daily_costs(scenario_index, :) = [ ...
             scenario.phase0.total_cost, ...
             scenario.phase1.total_cost, ...
-            scenario.phase2.total_cost];
+            scenario.phase2.total_cost, ...
+            scenario.phase3.total_cost];
         grid_costs(scenario_index, :) = [ ...
             scenario.phase0.grid_cost, ...
             scenario.phase1.grid_cost, ...
-            scenario.phase2.grid_cost];
+            scenario.phase2.grid_cost, ...
+            scenario.phase3.grid_cost];
     end
 
     figure('Name', 'Sunny and Cloudy Cost Comparison', ...
-        'Position', [150, 100, 1100, 700]);
+        'Position', [150, 100, 1200, 700]);
     subplot(1, 3, 1);
     grouped_bars(daily_costs, scenario_names, phase_names, ...
         'Daily total cost', 'Cost [Rs/day]');
@@ -60,24 +62,24 @@ end
 function plot_daily_details(sunny, cloudy)
 %PLOT_DAILY_DETAILS Detailed 24h dispatch plots for all six cases.
 %
-%   Creates two figure windows (one per scenario) each with three
-%   subplots (baseline, heuristic, LP) showing PV vs load, grid
-%   import/export, and battery charge/discharge.
+%   Creates two figure windows (one per scenario) each with four
+%   subplots (baseline, heuristic, LP naive, LP aware) showing PV vs load,
+%   grid import/export, and battery charge/discharge.
 
     scenarios = {sunny, cloudy};
     scenario_names = {'Sunny', 'Cloudy'};
-    phase_names = {'Baseline', 'Heuristic', 'LP'};
-    phase_fields = {'phase0', 'phase1', 'phase2'};
+    phase_names = {'Baseline', 'Heuristic', 'LP naive', 'LP aware'};
+    phase_fields = {'phase0', 'phase1', 'phase2', 'phase3'};
 
     for s = 1:2
         scenario = scenarios{s};
 
         figure('Name', sprintf('Daily Dispatch Cost - %s', scenario_names{s}), ...
-            'Position', [50 + (s - 1) * 750, 50, 700, 1000]);
+            'Position', [50 + (s - 1) * 750, 40, 720, 1150]);
 
-        for p = 1:3
+        for p = 1:4
             phase = scenario.(phase_fields{p});
-            subplot(3, 1, p);
+            subplot(4, 1, p);
 
             hold on;
             plot(scenario.time, scenario.P_pv, 'LineWidth', 1.2, ...

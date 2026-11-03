@@ -104,8 +104,8 @@ solver output — no value is scaled, tuned, or overwritten after the run.
 | Phase | Grid Cost/day | Degradation/day | Total/day | Total/month | EFC |
 |-------|--------------|-----------------|-----------|-------------|-----|
 | Phase 0 (Baseline) | Rs 50.54 | Rs 0.00 | Rs 50.54 | Rs 1516.10 | 0.000 |
-| Phase 1 (Heuristic) | Rs 28.97 | Rs 34.71 | Rs 63.69 | Rs 1910.55 | 0.801 |
-| Phase 2 (LP) | Rs 24.69 | Rs 34.71 | Rs 59.40 | Rs 1781.94 | 0.801 |
+| Phase 1 (Heuristic) | Rs 28.97 | Rs 20.83 | Rs 49.80 | Rs 1494.01 | 0.801 |
+| Phase 2 (LP) | Rs 24.69 | Rs 20.83 | Rs 45.51 | Rs 1365.39 | 0.801 |
 
 **Savings vs. the no-battery baseline:**
 
@@ -117,13 +117,14 @@ solver output — no value is scaled, tuned, or overwritten after the run.
 
 > **Note:** Phase 1 and Phase 2 both accrue post-hoc degradation cost —
 > on this day they cycle identically (EFC 0.801 each), so both carry
-> Rs 34.71/day. Phase 0 has no battery, so its degradation cost is
+> Rs 20.83/day. Phase 0 has no battery, so its degradation cost is
 > genuinely zero. All costs are unscaled APDCL tariff values; no billing
 > calibration factor is applied.
 >
-> **Note:** on total cost the battery is *more expensive than no battery*
-> (Rs 59.40 vs Rs 50.54/day), because degradation against Rs 130,000
-> CAPEX exceeds the electricity it saves. See [[Defensibility Analysis]] §6.
+> **Note:** under the legacy 100%-DoD, 5000-cycle model the battery pays for
+> itself (Rs 45.51 vs Rs 50.54/day). Repriced under the stricter 80%-DoD
+> Phase 3 model the same dispatch is Rs 50.72/day, slightly worse than no
+> battery. See [[Defensibility Analysis]] §6 and [[Phase 3 Results]].
 
 ### Energy Flows
 
@@ -134,7 +135,7 @@ solver output — no value is scaled, tuned, or overwritten after the run.
 | Phase 2 | 5.43 kWh | 2.91 kWh | 16.98 kWh |
 
 > **Note:** Phase 1 and Phase 2 move *identical* energy on this day, yet
-> the LP costs Rs 4.38 less. The saving is not from using less grid
+> the LP costs Rs 4.29 less. The saving is not from using less grid
 > energy — it is from **when** that energy is bought. The LP shifts
 > import out of the 1.2× peak window into cheaper hours, which is exactly
 > the ToD arbitrage the battery exists to capture. The heuristic
@@ -154,7 +155,7 @@ The heuristic discharges the battery the instant a deficit appears, with
 no knowledge of the tariff clock. The LP holds charge back and releases
 it during the 1.2× peak window. On this day both end up moving the same
 5.43 kWh of import, but the LP places it at cheaper times and saves
-Rs 4.38/day (14.8%) doing so.
+Rs 4.29/day (14.8%) doing so.
 
 Because the two controllers cycle the battery equally (EFC 0.801 each),
 the entire gap is attributable to dispatch *timing* — which is the cleanest

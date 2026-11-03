@@ -104,15 +104,15 @@ calibrated, scaled, or substituted after the run.
 
 **Grid cost** is the electricity charge alone — the basis used by most
 published EMS comparisons. **Total cost** adds battery degradation at
-Rs 43.33 per equivalent full cycle.
+Rs 26.00 per equivalent full cycle (legacy 100%-DoD, 5000-cycle model).
 
 ### Sunny Day
 
 | Case | Grid/day | Degr./day | Total/day | Grid Import | Grid Export |
 |------|----------|-----------|-----------|-------------|-------------|
 | Baseline | Rs 50.54 | Rs 0.00 | Rs 50.54 | 13.03 kWh | 11.33 kWh |
-| Heuristic | Rs 28.97 | Rs 34.71 | Rs 63.69 | 5.43 kWh | 2.91 kWh |
-| LP | Rs 24.69 | Rs 34.71 | Rs 59.40 | 5.43 kWh | 2.91 kWh |
+| Heuristic | Rs 28.97 | Rs 20.83 | Rs 49.80 | 5.43 kWh | 2.91 kWh |
+| LP | Rs 24.69 | Rs 20.83 | Rs 45.51 | 5.43 kWh | 2.91 kWh |
 
 **On grid cost the LP saves Rs 25.85/day (51.2%) vs baseline**, and beats
 the heuristic by Rs 4.29/day (14.8%).
@@ -122,13 +122,13 @@ the heuristic by Rs 4.29/day (14.8%).
 | Case | Grid/day | Degr./day | Total/day | Grid Import | Grid Export |
 |------|----------|-----------|-----------|-------------|-------------|
 | Baseline | Rs 87.14 | Rs 0.00 | Rs 87.14 | 14.68 kWh | 4.64 kWh |
-| Heuristic | Rs 79.47 | Rs 19.13 | Rs 98.59 | 10.49 kWh | 0.00 kWh |
-| LP | Rs 66.37 | Rs 33.14 | Rs 99.50 | 10.82 kWh | 0.00 kWh |
+| Heuristic | Rs 79.47 | Rs 11.48 | Rs 90.94 | 10.49 kWh | 0.00 kWh |
+| LP | Rs 66.37 | Rs 19.88 | Rs 86.25 | 10.82 kWh | 0.00 kWh |
 
 **On grid cost the LP saves Rs 20.77/day (23.8%) vs baseline**, and beats
 the heuristic by Rs 13.10/day (16.5%).
 
-### Key Insight — and where the naive LP breaks
+### Key Insight — and where the naive LP's margin shrinks
 
 On **grid cost**, the optimisation gap is *wider* on the cloudy day
 (16.5%) than the sunny day (14.8%). Less free solar means dispatch timing
@@ -137,17 +137,18 @@ matters more. The cloudy LP imports **more** energy than the heuristic
 hours and avoids expensive ones. Total energy is not the objective; *when*
 it is bought is.
 
-> [!danger] On total cost, the cloudy-day LP LOSES
-> **Heuristic Rs 98.59 vs LP Rs 99.50 — the LP is 0.92% worse.**
+> [!warning] On total cost, the cloudy-day LP still wins — but barely
+> **Heuristic Rs 90.94 vs LP Rs 86.25 — the LP is 5.16% better.**
 >
 > The LP saves Rs 13.10 of electricity but cycles 1.7x harder (EFC 0.765
-> vs 0.441) and pays Rs 14.01 more in degradation. The electricity saving
-> does not cover the extra wear.
+> vs 0.441) and pays Rs 8.40 more in degradation. The electricity saving
+> still covers the extra wear, but most of the 16.5% grid-cost advantage is
+> consumed by battery life.
 >
-> This is the project's most valuable finding: **the degradation-unaware
-> LP over-cycles to chase savings its own battery cost consumes.** It is
-> the clearest possible motivation for a degradation-aware Phase 3, and it
-> is demonstrated with numbers rather than asserted.
+> **The degradation-unaware LP is over-cycling to chase savings its own
+> battery cost partly consumes.** Under the stricter 80%-DoD Phase 3 model
+> the effect is large enough that the controller must trim that cycling to
+> stay ahead. See [[Phase 3 Results]].
 
 ### Why the Heuristic Underperforms on Cloudy Days
 
@@ -159,10 +160,10 @@ timesteps in the cloudy case) and discharge during expensive ones. That
 is a capability the heuristic structurally does not have.
 
 It costs the LP something, though: it cycles harder (EFC 0.765 vs the
-heuristic's 0.441) and incurs Rs 33.14/day in degradation against the
-heuristic's Rs 19.13. On the sunny day both cycle identically so there is
-no penalty either way; on the cloudy day the extra cycling is what flips
-the result.
+heuristic's 0.441) and incurs Rs 19.88/day in degradation against the
+heuristic's Rs 11.48. On the sunny day both cycle identically so there is
+no penalty either way; on the cloudy day the extra cycling is what cuts the
+LP's total-cost advantage from 16.5% to 5.2%.
 
 ---
 

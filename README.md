@@ -39,17 +39,41 @@ To prove that this naive optimization degrades battery health rapidly:
 ---
 
 ## Phase 3: Cost Optimization With Battery Cycling & Degradation Constraints
+**Status: implemented and verified.** Code lives in `Matlab/Phase3/`; measured
+results are in `General Notes/Phase 3 Results.md`.
+
 **Objective:** Formulate a multi-objective optimization problem that balances ToD tariff grid savings against battery replacement costs.
 
 ### Combined Objective Function
-$$\min_{x} \sum_{k=1}^{N} \left[ \underbrace{C_{\text{grid}}(k) \cdot P_{\text{grid}}(k) \cdot \Delta T}_{\text{Grid Energy Cost}} + \underbrace{\alpha \cdot C_{\text{deg}}\left(P_{\text{batt}}(k), SOC(k)\right)}_{\text{Battery Degradation Penalty}} \right]$$
+$$\min_{x} \sum_{k=1}^{N} \left[ \underbrace{C_{\text{grid}}(k) \cdot P_{\text{grid}}(k) \cdot \Delta T}_{\text{Grid Energy Cost}} + \underbrace{\alpha \cdot c_{\text{deg}}\left(P_{\text{ch}}(k)+P_{\text{dis}}(k)\right) \cdot \Delta T}_{\text{Battery Degradation Penalty}} \right]$$
 
-* **Degradation Weighting Factor ($\alpha$):** Parameter to scale degradation penalty.
-* **Degradation Modeling:** Depth of Discharge (DoD) stress function or non-linear cycle aging curves.
+* **Degradation Weighting Factor ($\alpha$):** Dimensionless; $\alpha=1$ prices
+  wear at its modelled cost, and an alpha sweep reports the trade-off.
+* **Degradation Modeling:** DoD-aware linear throughput cost at the design
+  depth of discharge. The battery is rated at **80% DoD and 5000 cycles**:
+  $$c_{\text{deg}} = \frac{C_{\text{replacement}}}{N_{\text{cycles,rated}} \cdot 2 E_B \cdot DoD_{\text{rated}}} = \frac{130000}{5000 \times 16} = 1.6250\ \text{Rs/kWh}$$
+* **Terminal condition:** $SOC(N+1) \ge SOC_0$, so the optimizer cannot drain
+  the battery for free at the horizon edge.
 
-### Optimization Methods
-* **Convex / Quadratic Programming:** If degradation is linearized or approximated quadratically.
-* **Metaheuristics:** Particle Swarm Optimization (`pso`) or Genetic Algorithm (`ga`) to navigate non-linear battery degradation functions.
+### Optimization Method
+* Solved as a **linear program** (`linprog` in MATLAB). The wear term is linear
+  in throughput, so the problem stays convex and globally optimal.
+* Phase 2 stays on its legacy 100%-DoD, 5000-cycle model (also updated to 5000
+  cycles). Phase 3 uses the DoD-aware model; comparisons reprice Phase 2
+  explicitly and label the model.
+
+### Measured Result (sunny day, $\alpha=1$)
+| Quantity | Phase 3 |
+|---|---:|
+| Grid cost | Rs 26.88/day |
+| Degradation | Rs 22.10/day |
+| **Total** | **Rs 48.97/day** |
+| EFC | 0.680 |
+
+The same Phase 2 dispatch repriced under the Phase 3 model costs
+Rs 50.72/day, so Phase 3 saves Rs 1.74/day by trimming marginal cycling and
+lands below the Rs 50.54/day no-battery baseline. The alpha sweep knee is
+$\alpha=1.25$.
 
 ---
 
