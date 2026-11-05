@@ -39,8 +39,8 @@ function results = run_all_phases(alpha)
     total_costs = grid_costs + degradation_costs;
     monthly_total_costs = 30 * total_costs;
     efc = [0, results.phase1.EFC, results.phase2.EFC, results.phase3.EFC];
-    models = {'none', 'legacy 100% DoD', 'legacy 100% DoD', ...
-        results.phase3.validation.degradation_model};
+    models = {'none', results.phase1.degradation_model, ...
+        results.phase2.degradation_model, results.phase3.degradation_model};
 
     fprintf('\n');
     fprintf('==========================================================================================\n');
@@ -58,15 +58,7 @@ function results = run_all_phases(alpha)
             total_costs(i), monthly_total_costs(i), efc(i), models{i});
     end
     fprintf('------------------------------------------------------------------------------------------\n');
-
-    % Like-for-like view: Phase 2's dispatch repriced under the Phase 3 model.
-    [phase2_deg_p3, phase2_efc_p3] = ...
-        battery_degradation_dod(results.phase2.P_ch, results.phase2.P_dis, params);
-    fprintf(' Reference: Phase 2 dispatch repriced under the Phase 3 wear model\n');
-    fprintf('            grid Rs %.2f + wear Rs %.2f = Rs %.2f/day (EFC %.3f)\n', ...
-        results.phase2.grid_cost, phase2_deg_p3, ...
-        results.phase2.grid_cost + phase2_deg_p3, phase2_efc_p3);
-    fprintf('            Phase 2 as reported above still uses the frozen legacy model.\n');
+    fprintf(' All phases use the same wear model, so degradation columns are comparable.\n');
     fprintf('==========================================================================================\n\n');
 
     %% Cost comparison plot

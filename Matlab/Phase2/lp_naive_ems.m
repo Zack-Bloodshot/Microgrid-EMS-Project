@@ -36,8 +36,9 @@ function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, grid_cost, deg_cost] = ...
 %     grid_cost - scalar, direct monetary cost paid to the utility under
 %                 the full ToD tariff (Rs), computed via calculate_costs.m
 %                 on the resulting P_gimp/P_gexp profiles
-%     deg_cost  - scalar, post-simulation estimated battery degradation
-%                 cost (Rs), unpenalized in the solver
+%     deg_cost  - scalar, post-simulation battery degradation cost (Rs)
+%                 from the shared 80%-DoD / 5000-cycle model, unpenalized
+%                 in the solver
 %
 %   Note: SOC(N+1) is deliberately left unconstrained. The horizon is a
 %   single self-contained day whose SOC0 is a given boundary condition,
@@ -147,7 +148,7 @@ function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, grid_cost, deg_cost] = ...
     %% ---- 8) Grid monetary cost (accurate slab-based tariff) ----
     grid_cost = calculate_costs(P_gimp, P_gexp, dt, tariff);
 
-    %% ---- 9) Post-hoc battery degradation cost ----
+    %% ---- 9) Post-hoc battery degradation cost (shared model) ----
     deg_cost = battery_degradation(P_ch, P_dis, params);
 
 end

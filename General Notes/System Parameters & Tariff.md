@@ -47,29 +47,22 @@ related:
 | Charge efficiency | $\eta_{ch}$ | 0.95 | — |
 | Discharge efficiency | $\eta_{dis}$ | 0.95 | — |
 
-### Battery Degradation (Phase 1 and Phase 2)
+### Battery Degradation (all phases, shared model)
 
 | Parameter | Symbol | Value | Unit |
 |-----------|--------|-------|------|
 | Replacement cost | $C_{rep}$ | 130,000 | Rs |
-| Cycle-life coefficient | $A_{cycle}$ | 5000 | — |
-| Cycle-life exponent | $b_{cycle}$ | 1.3 | — |
-
-Cycle-life curve: $LifeCycles(DoD) = A_{cycle} \times DoD^{-b_{cycle}}$
-
-Degradation is reported post-hoc for **both** battery phases. Phase 1
-cycles the battery just as heavily as Phase 2, so charging it only to
-Phase 2 would understate the heuristic's true cost.
-
-### Battery Degradation (Phase 3, DoD-aware)
-
-| Parameter | Symbol | Value | Unit |
-|-----------|--------|-------|------|
 | Rated depth of discharge | $DoD_{rated}$ | 0.80 | — |
 | Rated cycle life at $DoD_{rated}$ | $N_{cycles,rated}$ | 5000 | cycles |
+| Diagnostic cycle-life exponent | $b_{cycle}$ | 1.3 | — |
 | Throughput cost | $c_{deg}$ | 1.6250 | Rs/kWh |
 | Cost per rated 80%-DoD cycle | | 26.00 | Rs |
 | Cost per equivalent full cycle | | 32.50 | Rs |
+
+The same `Matlab/battery_degradation.m` model prices every phase. Phase 1 and
+Phase 2 remain degradation-unaware in their controllers; their wear is
+reported post-hoc. Phase 3 puts the same wear term inside its LP objective.
+The per-timestep DoD and `LifeCycles` curve are diagnostics only.
 
 ### Validation
 

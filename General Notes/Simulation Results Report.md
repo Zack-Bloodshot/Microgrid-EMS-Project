@@ -25,8 +25,9 @@ related:
 >
 > **Two views are reported throughout.** *Grid cost* is electricity
 > charge only — the basis used by most published EMS comparisons.
-> *Total cost* adds post-hoc battery degradation at Rs 26.00 per
-> equivalent full cycle (legacy 100%-DoD, 5000-cycle model). The distinction
+> *Total cost* adds post-hoc battery degradation at Rs 32.50 per
+> equivalent full cycle (80%-DoD, 5000-cycle model). The same model is used
+> for every phase, so the rows are directly comparable. The distinction
 > matters: see §1 and §4.
 
 ---
@@ -50,8 +51,8 @@ picture changes, and that change is the most interesting result here.
 | Phase | Grid/day | Degradation/day | Total/day | Total/month |
 |-------|----------|-----------------|-----------|-------------|
 | 0 | Rs 50.54 | Rs 0.00 | **Rs 50.54** | Rs 1516.10 |
-| 1 | Rs 28.97 | Rs 20.83 | **Rs 49.80** | Rs 1494.01 |
-| 2 | Rs 24.69 | Rs 20.83 | **Rs 45.51** | Rs 1365.39 |
+| 1 | Rs 28.97 | Rs 26.03 | **Rs 55.01** | Rs 1650.21 |
+| 2 | Rs 24.69 | Rs 26.03 | **Rs 50.72** | Rs 1521.60 |
 
 ### Savings
 
@@ -60,16 +61,16 @@ picture changes, and that change is the most interesting result here.
 | Baseline → Heuristic | Grid | Rs 21.57 | 42.7% |
 | Baseline → LP | Grid | Rs 25.85 | 51.2% |
 | Heuristic → LP | Grid | Rs 4.29 | **14.8%** |
-| Heuristic → LP | **Total** | Rs 4.29 | **8.6%** |
+| Heuristic → LP | **Total** | Rs 4.29 | **7.8%** |
 
 > [!warning] Read the two tables together
 > The battery cuts the electricity bill by **half** — that part is solid
-> and matches published literature. At Rs 130,000 and a 5000-cycle legacy
-> model, it saves Rs 25.85/day of electricity while costing Rs 20.83/day in
-> wear, so the LP **total is Rs 5.03/day below the no-battery baseline**
-> (Rs 45.51 vs Rs 50.54). The caveat is that this uses the legacy 100%-DoD
-> curve; repriced under the stricter 80%-DoD Phase 3 model the same dispatch
-> rises to Rs 50.72/day. See [[Phase 3 Results]].
+> and matches published literature. At Rs 130,000 and the shared 80%-DoD /
+> 5000-cycle model, the LP saves Rs 25.85/day of electricity but costs
+> Rs 26.03/day in wear, so its **total is Rs 0.18/day above the no-battery
+> baseline** (Rs 50.72 vs Rs 50.54). The heuristic is clearly worse
+> (Rs 55.01). Only the degradation-aware controller in
+> [[Phase 3 Results]] beats doing nothing (Rs 48.97/day).
 
 All three phases pass power-balance and operating-limit validation with
 max residual `4.441e-16 kW` against a `1e-6 kW` tolerance.
@@ -115,13 +116,14 @@ Full bill reconstruction (both verified against `calculate_costs`):
 | Export credit (2.909 kWh × Rs 4.00) | − Rs 11.6377 | − Rs 11.6377 |
 | Fixed charge (Rs 70/30) | + Rs 2.3333 | + Rs 2.3333 |
 | **Grid cost** | **Rs 28.9729** | **Rs 24.6857** |
-| Post-hoc degradation (EFC 0.801 × Rs 26.00) | + Rs 20.83 | + Rs 20.83 |
-| **Total** | **Rs 49.80** | **Rs 45.51** |
+| Post-hoc degradation (EFC 0.801 × Rs 32.50) | + Rs 26.03 | + Rs 26.03 |
+| **Total** | **Rs 55.01** | **Rs 50.72** |
 
 Both controllers carry **identical** degradation cost (same EFC), so the
 grid-cost saving of Rs 4.29 passes straight through to the total. On this
 day the LP's advantage is pure timing, with no degradation penalty either
-way.
+way. Both totals sit above the no-battery baseline once the shared wear
+model is applied.
 
 This is the cleanest possible demonstration that the optimisation does
 real work: both controllers cycle the battery identically hard, so the
@@ -207,22 +209,22 @@ more.
 | Case | Grid/day | Degradation/day | Total/day |
 |------|----------|-----------------|-----------|
 | Baseline | Rs 87.14 | Rs 0.00 | **Rs 87.14** |
-| Heuristic | Rs 79.47 | Rs 11.48 | **Rs 90.94** |
-| LP | Rs 66.37 | Rs 19.88 | **Rs 86.25** |
+| Heuristic | Rs 79.47 | Rs 14.35 | **Rs 93.81** |
+| LP | Rs 66.37 | Rs 24.85 | **Rs 91.22** |
 
 > [!warning] The LP wins, but wear eats most of the margin
-> **Heuristic Rs 90.94 vs LP Rs 86.25 — the LP is 5.16% better.**
+> **Heuristic Rs 93.81 vs LP Rs 91.22 — the LP is 2.76% better.**
 >
 > The LP buys Rs 13.10 less electricity but cycles 1.7× harder (EFC 0.765
-> vs 0.441) and pays Rs 8.40 more in degradation. The electricity saving
+> vs 0.441) and pays Rs 10.51 more in degradation. The electricity saving
 > still covers the extra wear, but the margin is far smaller than the 16.48%
 > grid-cost advantage suggests.
 
-This is why the degradation model matters. Under the legacy 5000-cycle curve
-the LP still comes out ahead on total cost, but it is over-cycling to chase
-marginal savings that battery wear consumes. Under the stricter 80%-DoD model
-the Phase 3 controller trims that marginal cycling and lands slightly below
-this Phase 2 result (Rs 86.13 vs Rs 86.25/day). See [[Phase 3 Results]].
+This is why the degradation model matters. The naive LP is over-cycling to
+chase marginal savings that battery wear consumes. The degradation-aware
+Phase 3 controller trims that marginal cycling (EFC 0.765 → 0.441) and lands
+well below this Phase 2 result (Rs 86.13 vs Rs 91.22/day). See
+[[Phase 3 Results]].
 
 ### The capability the heuristic lacks
 
@@ -240,7 +242,7 @@ function is blind to that cost.
 | Basis | Heuristic | LP | LP advantage |
 |-------|-----------|----|--------------|
 | Grid cost | Rs 79.47 | Rs 66.37 | **+16.48%** |
-| Total cost | Rs 90.94 | Rs 86.25 | **+5.16%** |
+| Total cost | Rs 93.81 | Rs 91.22 | **+2.76%** |
 
 The grid-cost view matches the published literature. The total-cost view
 shows how much of that advantage battery wear consumes. Both are worth
@@ -311,6 +313,7 @@ Both battery phases now report post-hoc degradation.
 | Simultaneous charge/discharge | None |
 | Phase 2 grid cost cross-check | `lp_naive_ems` vs `calculate_costs` — equal |
 | Phase 2 degradation cross-check | `lp_naive_ems` vs `battery_degradation` — equal |
+| Shared degradation model | Phase 1/2/3 all use `battery_degradation.m` |
 | Bill reconstruction | Recomputed independently, matches to 4 decimals |
 | Cost decomposition | Rs 4.29 predicted saving vs Rs 4.29 observed |
 | MATLAB warnings | None |
@@ -339,10 +342,9 @@ Carried forward from [[System Parameters & Tariff]]:
 
 ## 8. Next Steps
 
-1. **Degradation-aware LP (Phase 3).** The cloudy-day result shows the
-   naive LP cycling 1.7× harder than necessary at 3× the degradation
-   cost. Folding a per-cycle cost into the objective should close some
-   of that gap while keeping most of the Rs 12.60/day saving.
+1. **Degradation-aware LP (Phase 3).** Implemented. On the cloudy day it
+   trims EFC from 0.765 to 0.441 and lands Rs 5.09/day below the naive LP
+   (Rs 86.13 vs Rs 91.22). See [[Phase 3 Results]].
 2. **Multi-day horizon.** Required to exercise the 300/500 kWh slabs and
    to make monthly figures simulated rather than extrapolated.
 3. **Measured or TMY-driven profiles** to replace the parametric curves.

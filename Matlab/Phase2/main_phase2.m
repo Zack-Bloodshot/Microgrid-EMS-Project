@@ -7,7 +7,7 @@
 %     4) Load tariff data                     (tariff_params)
 %     5) Solve the naive cost-minimizing LP   (lp_naive_ems)
 %     6) Validate the result                  (validate_lp_solution)
-%     7) Quantify post-hoc degradation        (battery_degradation)
+%     7) Quantify post-hoc degradation        (battery_degradation, shared)
 %     8) Plot PV/load, dispatch, SOC, curtailment, and DoD
 %
 %   This is the single entry point for the Phase 2 LP-based baseline
@@ -55,7 +55,7 @@ if ~report.all_checks_passed
         'One or more Phase 2 validation checks failed. See summary above.');
 end
 
-%% 6) Post-hoc battery degradation metrics (for reporting/plots)
+%% 6) Post-hoc battery degradation metrics (shared 80%-DoD model)
 [deg_cost_check, EFC, DoD, LifeCycles] = battery_degradation(P_ch, P_dis, params);
 assert(abs(deg_cost_check - deg_cost) < 1e-9, ...
     'main_phase2:degCostMismatch', 'deg_cost from lp_naive_ems and battery_degradation disagree.');

@@ -19,17 +19,18 @@ related:
 
 ## What This Does
 
-`run_all_phases.m` is the **single-entry orchestration script** that runs all three EMS controller phases on the same PV/load profiles and produces a unified cost comparison. It replaces the need to run `main_phase0.m`, `main_phase1.m`, and `main_phase2.m` separately.
+`run_all_phases.m` is the **single-entry orchestration script** that runs all four EMS controller phases on the same PV/load profiles and produces a unified cost comparison. It replaces the need to run `main_phase0.m`, `main_phase1.m`, `main_phase2.m`, and `main_phase3.m` separately.
 
 ---
 
-## The Three Phases
+## The Four Phases
 
 | Phase | Controller | Battery? | Objective | Degradation |
 |-------|-----------|----------|-----------|-------------|
 | **Phase 0** | Baseline (`rule_based_ems_p0`) | No | No storage — direct PV self-consumption, export surplus, import deficit | N/A (no battery) |
-| **Phase 1** | Heuristic (`rule_based_ems_p1`) | Yes | Greedy rule-based: charge from PV surplus, discharge on deficit | Post-hoc only |
-| **Phase 2** | LP (`lp_naive_ems`) | Yes | Cost-minimizing linear program (full foresight) | Post-hoc only |
+| **Phase 1** | Heuristic (`rule_based_ems_p1`) | Yes | Greedy rule-based: charge from PV surplus, discharge on deficit | Post-hoc, shared model |
+| **Phase 2** | LP naive (`lp_naive_ems`) | Yes | Grid-cost-minimizing linear program (full foresight) | Post-hoc, shared model |
+| **Phase 3** | LP aware (`lp_degradation_aware_ems`) | Yes | Grid + wear cost, terminal SOC ≥ SOC0 | In the objective |
 
 ### Phase 0 — Baseline (No Battery)
 
@@ -57,7 +58,15 @@ A linear program that minimizes total grid cost across the full 24-hour horizon 
 - ToD tariff multipliers (0.8× solar, 1.0× normal, 1.2× peak)
 - Slab rates
 
-The LP can charge the battery from the grid during cheap hours and discharge during expensive ones — something the heuristic cannot do. Degradation cost is computed **post-hoc** (not in the objective), which is the "naive" approach that Phase 3 will improve upon.
+The LP can charge the battery from the grid during cheap hours and discharge during expensive ones — something the heuristic cannot do. Degradation cost is computed **post-hoc** (not in the objective), which is the "naive" approach that Phase 3 improves upon.
+
+### Phase 3 — Degradation-Aware LP
+
+Same decision vector and constraints as Phase 2, plus a terminal SOC lower
+bound and a wear term `alpha * c_deg * (P_ch + P_dis) * dt` in the objective.
+At `alpha = 1`, wear is priced at its modelled cost. Every phase reports wear
+with the same `battery_degradation.m` model, so the totals are directly
+comparable.
 
 ---
 
@@ -83,6 +92,11 @@ run_all_phases()
   │     └── battery_degradation()  → post-hoc EFC, DoD, LifeCycles
   │     └── calculate_costs()      → cross-check grid cost
   │
+  ├── Phase 3: lp_degradation_aware_ems() → wear-aware dispatch
+  │     └── validate_phase3_solution()
+  │     └── battery_degradation()  → post-hoc cross-check
+  │     └── calculate_costs()      → cross-check grid cost
+  │
   ├── Console table                → grid/degradation/total per phase
   └── Stacked bar chart            → daily cost components + monthly bill
 ```
@@ -104,27 +118,31 @@ solver output — no value is scaled, tuned, or overwritten after the run.
 | Phase | Grid Cost/day | Degradation/day | Total/day | Total/month | EFC |
 |-------|--------------|-----------------|-----------|-------------|-----|
 | Phase 0 (Baseline) | Rs 50.54 | Rs 0.00 | Rs 50.54 | Rs 1516.10 | 0.000 |
-| Phase 1 (Heuristic) | Rs 28.97 | Rs 20.83 | Rs 49.80 | Rs 1494.01 | 0.801 |
-| Phase 2 (LP) | Rs 24.69 | Rs 20.83 | Rs 45.51 | Rs 1365.39 | 0.801 |
+| Phase 1 (Heuristic) | Rs 28.97 | Rs 26.03 | Rs 55.01 | Rs 1650.21 | 0.801 |
+| Phase 2 (LP naive) | Rs 24.69 | Rs 26.03 | Rs 50.72 | Rs 1521.60 | 0.801 |
+| Phase 3 (LP aware) | Rs 26.88 | Rs 22.10 | **Rs 48.97** | **Rs 1469.21** | 0.680 |
 
 **Savings vs. the no-battery baseline:**
 
 | Comparison | Daily saving | Reduction |
 |------------|--------------|-----------|
-| Baseline → Heuristic | Rs 21.57 | **42.7%** |
-| Baseline → LP | Rs 25.85 | **51.2%** |
-| Heuristic → LP (grid cost) | Rs 4.29 | **14.8%** |
+| Baseline → Heuristic (grid) | Rs 21.57 | **42.7%** |
+| Baseline → LP naive (grid) | Rs 25.85 | **51.2%** |
+| Heuristic → LP naive (grid) | Rs 4.29 | **14.8%** |
+| Baseline → LP aware (total) | Rs 1.56 | **3.1%** |
+| LP naive → LP aware (total) | Rs 1.75 | **3.4%** |
 
 > **Note:** Phase 1 and Phase 2 both accrue post-hoc degradation cost —
 > on this day they cycle identically (EFC 0.801 each), so both carry
-> Rs 20.83/day. Phase 0 has no battery, so its degradation cost is
+> Rs 26.03/day. Phase 0 has no battery, so its degradation cost is
 > genuinely zero. All costs are unscaled APDCL tariff values; no billing
 > calibration factor is applied.
 >
-> **Note:** under the legacy 100%-DoD, 5000-cycle model the battery pays for
-> itself (Rs 45.51 vs Rs 50.54/day). Repriced under the stricter 80%-DoD
-> Phase 3 model the same dispatch is Rs 50.72/day, slightly worse than no
-> battery. See [[Defensibility Analysis]] §6 and [[Phase 3 Results]].
+> **Note:** under the shared 80%-DoD, 5000-cycle model the naive battery
+> dispatch does **not** pay for itself (Rs 50.72 vs Rs 50.54/day), and the
+> heuristic is worse still (Rs 55.01). Only the degradation-aware Phase 3
+> controller beats doing nothing (Rs 48.97). See
+> [[Defensibility Analysis]] §6 and [[Phase 3 Results]].
 
 ### Energy Flows
 
@@ -133,6 +151,7 @@ solver output — no value is scaled, tuned, or overwritten after the run.
 | Phase 0 | 13.03 kWh | 11.33 kWh | 16.98 kWh |
 | Phase 1 | 5.43 kWh | 2.91 kWh | 16.98 kWh |
 | Phase 2 | 5.43 kWh | 2.91 kWh | 16.98 kWh |
+| Phase 3 | 6.58 kWh | 4.18 kWh | 16.98 kWh |
 
 > **Note:** Phase 1 and Phase 2 move *identical* energy on this day, yet
 > the LP costs Rs 4.29 less. The saving is not from using less grid
@@ -164,11 +183,11 @@ than merely cycling harder.
 
 ### 3. It Sets Up Phase 3
 
-Phase 2 is "naive" — it ignores degradation in the objective. The post-hoc degradation cost (EFC, DoD, LifeCycles) is computed but not penalized. This creates the narrative tension for Phase 3: *"The LP saves the most on grid cost, but at what battery health cost?"*
+Phase 2 is "naive" — it ignores degradation in the objective. The post-hoc degradation cost (EFC, DoD, LifeCycles) is computed but not penalized. This creates the narrative tension for Phase 3: *"The LP saves the most on grid cost, but at what battery health cost?"* Phase 3 answers it by cycling less (EFC 0.801 → 0.680) and landing Rs 1.75/day below Phase 2 on total cost.
 
 ### 4. It Validates the Pipeline
 
-The cross-checks (grid cost computed twice, degradation computed twice, power balance validation) ensure that the three phases are internally consistent and comparable.
+The cross-checks (grid cost computed twice, degradation computed twice, power balance validation) ensure that the four phases are internally consistent and comparable.
 
 ---
 
@@ -190,7 +209,7 @@ section in [[System Parameters & Tariff]].
 
 ## Relationship to Other Analyses
 
-- **[[Cloudy vs Sunny Comparison]]** — takes the same three phases and runs them on two different PV profiles (sunny vs cloudy) to isolate the weather effect
+- **[[Cloudy vs Sunny Comparison]]** — takes the same four phases and runs them on two different PV profiles (sunny vs cloudy) to isolate the weather effect
 - **[[README]]** — full project architecture including Phases 3–6 which build on this comparison
 - **[[Objectives and Benefits]]** — the practical value proposition that these savings translate into
 
@@ -202,8 +221,9 @@ section in [[System Parameters & Tariff]].
 - `Matlab/simulate_day.m` — shared pipeline; single source of truth for running all controllers
 - `Matlab/Phase0/rule_based_ems_p0.m` — baseline controller
 - `Matlab/Phase1/rule_based_ems_p1.m` — heuristic controller
-- `Matlab/Phase2/lp_naive_ems.m` — LP controller
-- `Matlab/Phase2/battery_degradation.m` — post-hoc degradation model
+- `Matlab/Phase2/lp_naive_ems.m` — LP naive controller
+- `Matlab/Phase3/lp_degradation_aware_ems.m` — degradation-aware LP controller
+- `Matlab/battery_degradation.m` — shared degradation model
 - `Matlab/tariff_params.m` — APDCL tariff data
 - `Matlab/calculate_costs.m` — cost calculation with slab + ToD rates
 - `Matlab/system_params.m` — shared system parameters

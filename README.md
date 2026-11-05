@@ -58,9 +58,9 @@ $$\min_{x} \sum_{k=1}^{N} \left[ \underbrace{C_{\text{grid}}(k) \cdot P_{\text{g
 ### Optimization Method
 * Solved as a **linear program** (`linprog` in MATLAB). The wear term is linear
   in throughput, so the problem stays convex and globally optimal.
-* Phase 2 stays on its legacy 100%-DoD, 5000-cycle model (also updated to 5000
-  cycles). Phase 3 uses the DoD-aware model; comparisons reprice Phase 2
-  explicitly and label the model.
+* Every phase uses the same DoD-aware model (`Matlab/battery_degradation.m`).
+  Phase 2 stays degradation-unaware in its objective but its wear is priced
+  with the shared model, so all phase totals are directly comparable.
 
 ### Measured Result (sunny day, $\alpha=1$)
 | Quantity | Phase 3 |
@@ -70,10 +70,9 @@ $$\min_{x} \sum_{k=1}^{N} \left[ \underbrace{C_{\text{grid}}(k) \cdot P_{\text{g
 | **Total** | **Rs 48.97/day** |
 | EFC | 0.680 |
 
-The same Phase 2 dispatch repriced under the Phase 3 model costs
-Rs 50.72/day, so Phase 3 saves Rs 1.74/day by trimming marginal cycling and
-lands below the Rs 50.54/day no-battery baseline. The alpha sweep knee is
-$\alpha=1.25$.
+The Phase 2 dispatch costs Rs 50.72/day under the same model, so Phase 3
+saves Rs 1.75/day by trimming marginal cycling and lands below the
+Rs 50.54/day no-battery baseline. The alpha sweep knee is $\alpha=1.25$.
 
 ---
 

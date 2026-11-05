@@ -15,11 +15,10 @@ function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, ...
 %   subject to power balance, SOC recursion/bounds, a terminal-SOC lower
 %   bound SOC(N+1) >= SOC0, and the usual variable bounds.
 %
-%   The degradation coefficient comes from the DoD-aware Phase 3 model:
+%   The degradation coefficient comes from the shared degradation model
+%   (battery_degradation.m), the same one used to price Phase 1 and Phase 2:
 %
 %     c_deg = Cost_replacement / (N_cycles_rated * 2*E_B*DoD_rated)
-%
-%   Phase 2's legacy A_cycle field is deliberately NOT used here.
 %
 %   Decision vector layout (unchanged from Phase 2):
 %     x = [P_gimp(1:N); P_gexp(1:N); P_ch(1:N); P_dis(1:N); P_curt(1:N)]
@@ -39,7 +38,7 @@ function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, ...
 %     objective_value - solver objective [Rs]; includes alpha, so it is
 %                     not a physical cost unless alpha = 1
 %
-%   See also: battery_degradation_dod, validate_phase3_solution.
+%   See also: battery_degradation, validate_phase3_solution.
 
     if nargin < 5 || isempty(alpha)
         alpha = 1;
@@ -71,7 +70,7 @@ function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, ...
     idx_curt = 4*N+1:5*N;
     nVar = 5*N;
 
-    %% ---- 1) Degradation coefficient (DoD-aware model) ----
+    %% ---- 1) Degradation coefficient (shared model) ----
     c_deg = params.Cost_replacement / ...
         (params.N_cycles_rated * 2 * E_B * params.DoD_rated);
 
@@ -161,7 +160,7 @@ function [P_ch, P_dis, P_gimp, P_gexp, SOC, P_curt, ...
 
     %% ---- 9) Physical costs (always alpha = 1) ----
     grid_cost = calculate_costs(P_gimp, P_gexp, dt, tariff);
-    [deg_cost, ~, ~, ~] = battery_degradation_dod(P_ch, P_dis, params);
+    [deg_cost, ~, ~, ~] = battery_degradation(P_ch, P_dis, params);
 
     % Internal consistency: the physical dispatch must reproduce the
     % physical costs used for reporting.

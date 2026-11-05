@@ -132,10 +132,14 @@ Although battery degradation is excluded from the solver decision-making in Phas
    $$E_{\text{cycled}} = \sum_{k=1}^N \left( P_{\text{ch}}(k) + P_{\text{dis}}(k) \right) \cdot \Delta T$$
    $$\text{EFC} = \frac{E_{\text{cycled}}}{2 \cdot E_B}$$
 
-2. **Depth-of-Discharge (DoD) Stress & Degradation Cost Calculation:**
+2. **Depth-of-Discharge Diagnostics & Degradation Cost:**
    $$DoD(k) = \frac{(P_{\text{ch}}(k) + P_{\text{dis}}(k)) \cdot \Delta T}{E_B}$$
-   $$LifeCycles(DoD(k)) = A \cdot (DoD(k))^{-b}$$
-   $$C_{\text{deg,naive}} = \sum_{k=1}^{N} \left[ Cost_{\text{replacement}} \times \frac{(P_{\text{ch}}(k) + P_{\text{dis}}(k)) \cdot \Delta T}{2 \cdot E_B \cdot LifeCycles(DoD(k))} \right]$$
+   $$LifeCycles(DoD(k)) = N_{\text{cycles,rated}} \cdot \left(\frac{DoD(k)}{DoD_{\text{rated}}}\right)^{-b}$$
+   $$C_{\text{deg}} = c_{\text{deg}} \sum_{k=1}^{N} \left(P_{\text{ch}}(k) + P_{\text{dis}}(k)\right) \Delta T, \qquad
+   c_{\text{deg}} = \frac{Cost_{\text{replacement}}}{N_{\text{cycles,rated}} \cdot 2 E_B \cdot DoD_{\text{rated}}}$$
+
+   `DoD` and `LifeCycles` are diagnostics only. The same
+   `Matlab/battery_degradation.m` model prices Phase 1, Phase 2, and Phase 3.
 
 ---
 
@@ -161,8 +165,8 @@ After running `linprog`, the output vectors must pass four sanity checks before 
 # Simulation Results
 
 - Check `system_params.m`, `generate_pv_profile.m`, `generate_load_profile.m` for the data used.
-- Regenerated with the current parameters and the updated **5000-cycle** legacy curve.
-- Full cost model: Rs 130,000 replacement / (2 × 10 kWh × 5000) = **Rs 1.300/kWh throughput**, i.e. **Rs 26.00 per equivalent full cycle**.
+- Regenerated with the current parameters and the shared **80%-DoD, 5000-cycle** model.
+- Full cost model: Rs 130,000 / (5000 × 2 × 10 kWh × 0.80) = **Rs 1.625/kWh throughput**, i.e. **Rs 26.00 per rated cycle** and **Rs 32.50 per equivalent full cycle**.
 
 ![](phase2.png)
 
@@ -182,8 +186,8 @@ After running `linprog`, the output vectors must pass four sanity checks before 
 | **Grid cost (net)** | **Rs 24.69** |
 | Final SOC | 0.100 |
 | Equivalent Full Cycles (EFC) | 0.801 |
-| **Post-hoc degradation cost** | **Rs 20.83** |
-| **Total physical cost** | **Rs 45.51/day** |
+| **Post-hoc degradation cost** | **Rs 26.03** |
+| **Total physical cost** | **Rs 50.72/day** |
 
 ### Validation output
 
@@ -201,10 +205,10 @@ Phase 2 LP EMS Validation (N = 96)
 ```
 
 > [!note] Relation to Phase 3
-> Phase 2 remains the degradation-unaware LP. Its post-hoc wear uses the legacy
-> 100%-DoD, 5000-cycle model. Phase 3 uses the DoD-aware 80%-DoD, 5000-cycle
-> model, which prices throughput more conservatively (Rs 1.625/kWh vs
-> Rs 1.300/kWh). Do not compare the two degradation columns without labelling
-> the model.
+> Phase 2 remains the degradation-unaware LP: wear is not in its objective.
+> Its post-hoc wear is priced with the same 80%-DoD, 5000-cycle model as
+> Phase 1 and Phase 3 (`Matlab/battery_degradation.m`), so the reported totals
+> are directly comparable. Phase 3 adds the wear term to the objective and
+> cycles less (EFC 0.680 vs 0.801).
 
 

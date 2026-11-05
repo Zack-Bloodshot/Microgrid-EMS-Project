@@ -152,10 +152,11 @@ derived from *per-timestep* DoD. At a 15-minute timestep DoD is
 0.007–0.068, so `DoD^-1.3` resolved to LifeCycles of **1e5–1e6**, making
 degradation cost collapse to Rs 0.59/day — effectively zero.
 
-Corrected to EFC-based costing (`c = C_rep / (2·E_B·A)`), which is
-self-consistent by construction: one full cycle costs exactly
-`C_rep / A_cycle`. See `battery_degradation.m`. **This changed real
-conclusions** — see §6.
+Corrected to throughput costing at the rated depth of discharge
+(`c = C_rep / (N_cycles_rated·2·E_B·DoD_rated)`), which is self-consistent by
+construction: one rated 80%-DoD cycle costs exactly
+`C_rep / N_cycles_rated` (Rs 26.00). See `battery_degradation.m`. **This
+changed real conclusions** — see §6.
 
 **Why SOC₀ = 0.1 is the right choice:** at that setting the battery
 starts *and ends* the day empty, so no unpriced opening inventory
@@ -171,20 +172,20 @@ phases end at SOC 0.100.
 | Phase | Grid/day | Degradation/day | Total/day |
 |-------|----------|-----------------|-----------|
 | 0 Baseline | Rs 50.54 | Rs 0.00 | **Rs 50.54** |
-| 1 Heuristic | Rs 28.97 | Rs 20.83 | **Rs 49.80** |
-| 2 LP | Rs 24.69 | Rs 20.83 | **Rs 45.51** |
+| 1 Heuristic | Rs 28.97 | Rs 26.03 | **Rs 55.01** |
+| 2 LP naive | Rs 24.69 | Rs 26.03 | **Rs 50.72** |
+| 3 LP aware | Rs 26.88 | Rs 22.10 | **Rs 48.97** |
 
 Read this carefully — it is the most important table in your project.
 
-**Under the legacy 100%-DoD, 5000-cycle model the battery pays for itself**
-(Rs 45.51 vs Rs 50.54/day). It reduces your electricity bill by half, and the
-wear cost no longer exceeds the savings.
+**Under the shared 80%-DoD, 5000-cycle model, the naive battery dispatch does
+not pay for itself** (Rs 50.72 vs Rs 50.54/day). It halves the electricity bill,
+but the wear cost more than cancels the saving, and the heuristic is clearly
+worse (Rs 55.01). Only the degradation-aware Phase 3 controller beats doing
+nothing (Rs 48.97).
 
-But the margin is thin and model-sensitive. Repriced under the stricter
-80%-DoD Phase 3 wear model, the same Phase 2 dispatch rises to Rs 50.72/day —
-slightly *worse* than no battery. That is exactly the tension a real FYP should
-surface, and it is the strongest possible motivation for your
-degradation-aware Phase 3.
+That is exactly the tension a real FYP should surface: the optimiser is not
+worth having unless it adapts to the stricter wear price.
 
 ---
 
@@ -197,20 +198,20 @@ interview. Here is the honest arithmetic:
 
 | Quantity | Value |
 |----------|-------|
-| Battery life (5000 cycles ÷ 0.801 cyc/day) | 17.1 years |
+| Battery life (5000 rated cycles × 0.80 DoD ÷ 0.801 EFC/day) | 13.7 years |
 | Annual bill saving (LP vs no battery) | Rs 9,436 |
-| Annual degradation (legacy 100%-DoD) | Rs 7,602 |
-| **Net annual benefit (legacy model)** | **+ Rs 1,834** |
-| **Net annual benefit (Phase 3 wear model repricing)** | **− Rs 66** |
+| Annual degradation (shared 80%-DoD model) | Rs 9,502 |
+| **Net annual benefit (naive LP)** | **− Rs 66** |
+| **Net annual benefit (degradation-aware LP)** | **+ Rs 570** |
 | Battery replacement cost | Rs 130,000 |
-| **Lifetime bill savings** | **Rs 161,000** |
+| **Lifetime bill savings (naive LP)** | **Rs 129,100** |
 
-**Even under the generous legacy curve, ToD arbitrage barely repays the
-battery.** The lifetime bill saving of about Rs 161,000 against a Rs 130,000
-replacement cost leaves only ~Rs 31,000 of margin over 17 years — roughly
-Rs 1,800/year, and that disappears entirely when the same dispatch is repriced
-under the stricter 80%-DoD model. The chart shows how flat the cumulative
-savings curve is.
+**Even under the shared 80%-DoD curve, ToD arbitrage does not repay the naive
+LP.** The lifetime bill saving of about Rs 129,100 against a Rs 130,000
+replacement cost is slightly negative over 13.7 years — roughly −Rs 66/year.
+The degradation-aware controller does better because it cycles less: about
++Rs 570/year and Rs 139,100 of lifetime bill savings over 16.1 years. The chart
+shows how flat the cumulative savings curve is.
 
 ### So why do people install these anyway?
 
@@ -225,9 +226,9 @@ savings curve is.
 4. **Declining ToD spreads** make arbitrage more valuable over time.
 
 > [!tip] The killer interview line
-> *"My own model says ToD arbitrage only just repays the battery — net
-> +Rs 1,834/year under the legacy curve, and roughly break-even under the
-> stricter DoD-aware curve. It works because of the Rs 1,23,000 subsidy, and
+> *"My own model says ToD arbitrage barely repays the battery — net
+> −Rs 66/year for the naive LP and only +Rs 570/year once the controller
+> prices wear properly. It works because of the Rs 1,23,000 subsidy, and
 > because half the value is backup, which I haven't modelled yet. The
 > optimisation layer matters because it makes the battery last longer without
 > sacrificing savings."*
@@ -287,11 +288,11 @@ Naming the gap first is much stronger than being caught by it.
 > exactly where it comes from: it moves 1.188 kWh out of peak hours."
 
 **"Wouldn't the battery have paid for itself?"**
-> "Only just, and it depends on the wear model. Under the legacy 5000-cycle
-> curve it nets about +Rs 1,834/year; under the stricter DoD-aware curve it is
-> roughly break-even. The Rs 1,23,000 subsidy and unmodelled backup value are
-> what make it clearly worthwhile. I think that's more honest than claiming a
-> battery easily pays for itself."
+> "Only just. Under the shared 80%-DoD / 5000-cycle model the naive LP is
+> essentially break-even at −Rs 66/year; the degradation-aware controller
+> nets about +Rs 570/year because it cycles less. The Rs 1,23,000 subsidy and
+> unmodelled backup value are what make it clearly worthwhile. I think that's
+> more honest than claiming a battery easily pays for itself."
 
 **"What if the grid cuts out?"**
 > "I don't model that — my EMS is price-driven with no outage reserve. The
@@ -324,8 +325,8 @@ Naming the gap first is much stronger than being caught by it.
 
 Sweeps call the production pipeline unchanged, passing overrides through
 `tariff_params(overrides)` → `simulate_day(pv, load, params, tariff)`.
-No controller logic was modified. Default output is identical before and
-after the override plumbing (verified: Rs 50.54 / 28.97 / 24.69 grid).
+No controller logic was modified. Default output is unchanged by the
+override plumbing (verified: Rs 50.54 / 28.97 / 24.69 grid for Phases 0/1/2).
 
 Plots regenerate with `make_defensibility_plots()`.
 

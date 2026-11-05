@@ -8,8 +8,8 @@ function sweep = run_alpha_sweep(alphas, make_plot)
 %   sweep = RUN_ALPHA_SWEEP(alphas, false) skips the PNG plot (used by
 %   verify_phase3 so verification needs no generated files).
 %
-%   For every alpha the function records physical costs (grid + actual
-%   DoD-aware degradation), EFC, final SOC, curtailment, the solver
+%   For every alpha the function records physical costs (grid + degradation
+%   from the shared 80%-DoD model), EFC, final SOC, curtailment, the solver
 %   objective, and the validation status. It prints a formatted trade-off
 %   table and saves a 2x2 figure to General Notes/assets.
 %
@@ -51,7 +51,7 @@ function sweep = run_alpha_sweep(alphas, make_plot)
         report = validate_phase3_solution(P_pv, P_load, P_ch, P_dis, ...
             P_gimp, P_gexp, SOC, P_curt, params, false);
 
-        [~, EFC] = battery_degradation_dod(P_ch, P_dis, params);
+        [~, EFC] = battery_degradation(P_ch, P_dis, params);
 
         grid_cost(i)   = g;
         deg_cost(i)    = d;

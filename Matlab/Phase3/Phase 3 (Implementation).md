@@ -51,7 +51,7 @@ related:
 - $SOC$ — state of charge trajectory, $1 \times (N+1)$, $SOC(1)=SOC_0$
 - $P_{curt}$ — curtailed PV power [kW], $0 \le P_{curt}(k) \le P_{pv}(k)$
 - $grid\_cost$ — actual bill from `calculate_costs()` [Rs]
-- $deg\_cost$ — actual degradation cost from `battery_degradation_dod()` [Rs]
+- $deg\_cost$ — actual degradation cost from `battery_degradation()` [Rs]
 - $objective\_value$ — solver objective [Rs]; includes $\alpha$, so it is not a
   physical cost when $\alpha \ne 1$
 
@@ -83,11 +83,10 @@ They are **not** the historical first-pass guesses in the Phase 0/1/2 notes.
 > `0.8`, so changing the SOC limits updates the degradation model
 > automatically.
 
-> [!warning] Phase 2 still uses the legacy model
-> `Matlab/Phase2/battery_degradation.m` remains on the legacy 100%-DoD
-> $A_{cycle}=5000$ throughput model, so Phase 2 and Phase 3 price wear
-> differently. Phase 3 uses `battery_degradation_dod.m`. Any Phase 2 versus
-> Phase 3 comparison must label which degradation model prices each row.
+> [!note] One shared degradation model
+> `Matlab/battery_degradation.m` prices Phase 1, Phase 2, and Phase 3. Phase 2
+> remains degradation-unaware in its LP objective, but its post-hoc wear uses
+> this same model, so every reported total is directly comparable.
 
 > [!note] Units
 > Power is in kW, energy in kWh, time in hours, and money in Rs. SOC is a
@@ -101,42 +100,32 @@ They are **not** the historical first-pass guesses in the Phase 0/1/2 notes.
 Phase 2 is deliberately **degradation-unaware**. Its LP minimises only the
 grid bill, then prices the resulting wear afterwards. On the sunny day:
 
-| Quantity | Phase 0 (no battery) | Phase 2, legacy model | Phase 2 dispatch, repriced at 80% DoD / 5000 cycles |
+| Quantity | Phase 0 (no battery) | Phase 2 (naive) | Phase 3 (aware) |
 |---|---:|---:|---:|
-| Grid cost | Rs 50.54/day | Rs 24.69/day | Rs 24.69/day |
-| Post-hoc degradation | Rs 0.00/day | Rs 20.83/day | Rs 26.03/day |
-| **Total physical cost** | **Rs 50.54/day** | **Rs 45.51/day** | **Rs 50.72/day** |
-| EFC | 0.000 | 0.801 | 0.801 |
+| Grid cost | Rs 50.54/day | Rs 24.69/day | Rs 26.88/day |
+| Post-hoc degradation | Rs 0.00/day | Rs 26.03/day | Rs 22.10/day |
+| **Total physical cost** | **Rs 50.54/day** | **Rs 50.72/day** | **Rs 48.97/day** |
+| EFC | 0.000 | 0.801 | 0.680 |
 
-Two things are true at once:
+The grid-cost winner is not the total-cost winner. Phase 2 cuts electricity
+spend by Rs 25.85/day but adds Rs 26.03/day of wear, for a total of
+Rs 50.72/day — **Rs 0.18/day worse** than doing nothing. Phase 3 prices the same
+wear inside its objective, trims marginal cycling, and lands at Rs 48.97/day —
+better than both Phase 2 (Rs 50.72/day) and the no-battery baseline
+(Rs 50.54/day).
 
-1. Under the **legacy** 5000-cycle, 100%-DoD model, the battery already looks
-   economic: Phase 2 cuts electricity spend by Rs 25.85/day and adds
-   Rs 20.83/day of wear, for a total of Rs 45.51/day — **Rs 5.03/day better**
-   than doing nothing.
-2. Under the **updated** 5000-cycle, 80%-DoD model, the *same* Phase 2 dispatch
-   is repriced at Rs 26.03/day of wear. Total cost becomes Rs 50.72/day, which
-   is **Rs 0.18/day worse** than the no-battery baseline.
+That reversal is the point: a controller that prices wear *inside* the
+objective is worth building, and a grid-only objective is not enough.
 
-That reversal is the point. The two models disagree about whether Phase 2's
-aggressive cycling pays for itself, so a controller that prices wear *inside*
-the objective is worth building. Phase 3 prices wear at its modelled cost, trims
-the marginal cycling, and lands at Rs 48.97/day under the stricter model —
-better than both the repriced Phase 2 dispatch (Rs 50.72/day) and the
-no-battery baseline (Rs 50.54/day).
-
-> [!important] Phase 2 and Phase 3 are not like-for-like as reported
-> The repriced Phase 2 column is a **recalculation of the existing dispatch**
-> under the Phase 3 degradation model, not a Phase 2 code change. Phase 2's own
-> row still uses the legacy model and therefore shows a lower total
-> (Rs 45.51/day) than Phase 3 (Rs 48.97/day). Compare Phase 3 only against the
-> **repriced** Phase 2 figure (Rs 50.72/day) when judging the controller.
+> [!important] Like-for-like by construction
+> Phase 2 and Phase 3 are now priced with the same
+> `Matlab/battery_degradation.m` model. Phase 2's total (Rs 50.72/day) is its
+> actual post-hoc wear, not a repricing of a frozen row.
 
 ![[all-phase-cost-comparison.png|700]]
 
-*Figure 1 — Measured daily cost components for all four controllers. Phase 2
-and Phase 3 use different degradation models; Phase 3's lower wear is not a
-like-for-like comparison against the Phase 2 bar.*
+*Figure 1 — Measured daily cost components for all four controllers, all priced
+with the shared 80%-DoD / 5000-cycle model.*
 
 ```mermaid
 flowchart LR
@@ -190,8 +179,8 @@ degradation penalty.
 
 ## 3. Degradation Term
 
-Phase 3 uses `battery_degradation_dod.m`. The cost is still linear in energy
-throughput, but the rated cycle life is evaluated at the usable depth of
+Every phase uses `Matlab/battery_degradation.m`. The cost is linear in energy
+throughput, with the rated cycle life evaluated at the usable depth of
 discharge rather than at 100% DoD.
 
 $$
@@ -383,28 +372,18 @@ run on MATLAB R2024b, sunny day, $\alpha=1$ unless stated.
 
 ## Headline case ($\alpha = 1$)
 
-| Quantity | Phase 0 | Phase 1 | Phase 2 (legacy model) | **Phase 3** |
+| Quantity | Phase 0 | Phase 1 | Phase 2 | **Phase 3** |
 |---|---:|---:|---:|---:|
 | Grid cost [Rs/day] | 50.54 | 28.97 | 24.69 | **26.88** |
-| Degradation [Rs/day] | 0.00 | 20.83 | 20.83 | **22.10** |
-| **Total [Rs/day]** | **50.54** | **49.80** | **45.51** | **48.97** |
+| Degradation [Rs/day] | 0.00 | 26.03 | 26.03 | **22.10** |
+| **Total [Rs/day]** | **50.54** | **55.01** | **50.72** | **48.97** |
 | EFC | 0.000 | 0.801 | 0.801 | **0.680** |
 
-For a like-for-like comparison, Phase 2's dispatch repriced under the Phase 3
-wear model gives:
-
-$$
-24.69 + 26.03 = 50.72\ \text{Rs/day}, \qquad EFC = 0.801
-$$
-
-Phase 3 therefore saves **Rs 1.74/day** relative to the same dispatch priced
-with the same wear model. It does this by cycling less: EFC falls from 0.801 to
-0.680, grid cost rises by Rs 2.19/day, and wear falls by Rs 3.94/day.
-
-The Phase 2 and Phase 1 rows above use the **legacy** 100%-DoD model and are not
-directly comparable with the Phase 3 row. Under the stricter Phase 3 wear model,
-the no-battery baseline is Rs 50.54/day, repriced Phase 2 is Rs 50.72/day, and
-Phase 3 is Rs 48.97/day.
+All rows use the same wear model, so the comparison is direct. Phase 3 saves
+**Rs 1.75/day** relative to Phase 2 (Rs 50.72 → Rs 48.97). It does this by
+cycling less: EFC falls from 0.801 to 0.680, grid cost rises by Rs 2.19/day,
+and wear falls by Rs 3.94/day. Phase 1 and Phase 2 both sit above the
+no-battery baseline (Rs 50.54/day); only Phase 3 beats it.
 
 Daily energy at $\alpha=1$: battery charged 7.147 kWh, discharged 6.450 kWh,
 grid imported 6.583 kWh, grid exported 4.183 kWh, PV curtailed 0.000 kWh,
@@ -455,24 +434,22 @@ and EFC versus $\alpha$. The knee is $\alpha=1.25$.*
 
 ## Cloudy-day result
 
-| Quantity | Phase 0 | Phase 1 | Phase 2 (legacy) | Phase 3 |
+| Quantity | Phase 0 | Phase 1 | Phase 2 | Phase 3 |
 |---|---:|---:|---:|---:|
 | Grid cost [Rs/day] | 87.14 | 79.47 | 66.37 | 71.78 |
-| Degradation [Rs/day] | 0.00 | 11.48 | 19.88 | 14.35 |
-| **Total [Rs/day]** | **87.14** | **90.94** | **86.25** | **86.13** |
+| Degradation [Rs/day] | 0.00 | 14.35 | 24.85 | 14.35 |
+| **Total [Rs/day]** | **87.14** | **93.81** | **91.22** | **86.13** |
 | EFC | 0.000 | 0.441 | 0.765 | 0.441 |
 
 On the cloudy day Phase 3 beats the no-battery baseline by **Rs 1.01/day**
-(86.13 vs 87.14) and edges out Phase 2 as reported (86.25). It shifts the
-limited PV into the expensive evening window instead of exporting it cheaply.
-Phase 1 and Phase 2 are priced with the legacy 5000-cycle model; Phase 3 uses
-the 80%-DoD / 5000-cycle model, so the degradation columns are not
-like-for-like.
+(86.13 vs 87.14) and beats Phase 2 by **Rs 5.09/day** (86.13 vs 91.22). It
+shifts the limited PV into the expensive evening window instead of exporting it
+cheaply, while keeping cycling at the heuristic's level (EFC 0.441).
 
 > [!warning] Do not quote the old Rs 4.45/kWh figure
-> That number came from the legacy 3000-cycle model. Under the current 5000-cycle
-> models the throughput cost is Rs 1.300/kWh for legacy Phase 2 and
-> Rs 1.625/kWh for Phase 3. Keep the two models clearly separated in the report.
+> That number came from the former 3000-cycle model. Under the current
+> 80%-DoD, 5000-cycle model the throughput cost is Rs 1.625/kWh for every
+> phase (Rs 26.00 per rated cycle, Rs 32.50 per EFC).
 
 ---
 
@@ -489,17 +466,18 @@ check:
 6. **Curtailment** — $0 \le P_{curt}(k) \le P_{pv}(k)$.
 7. **No simultaneous charge/discharge** — not both above tolerance.
 8. **Cost cross-checks** — solver `grid_cost` matches `calculate_costs()`;
-   solver `deg_cost` matches `battery_degradation_dod()`.
+   solver `deg_cost` matches `battery_degradation()`.
 9. **Alpha-zero equivalence** — Phase 3 at $\alpha=0$ matches Phase 2's grid
-   cost within $10^{-6}$ Rs. Degradation is **not** expected to match, because
-   Phase 2 still uses the legacy model.
+   cost within $10^{-6}$ Rs and, with the shared wear model, its degradation
+   cost as well.
 
 Measured verification output (`verify_phase3`, MATLAB R2024b):
 
 | Check | Result | Detail |
 |---|---|---|
-| Phase 2 legacy baseline frozen | PASS | grid 24.6857, degr 20.8274, EFC 0.8011 |
-| DoD-aware degradation constants | PASS | DoD 0.80, 1.6250 Rs/kWh, 26.00 Rs/cycle |
+| Phase 2 baseline (shared model) | PASS | grid 24.6857, degr 26.0342, EFC 0.8011 |
+| All phases share one wear model | PASS | DoD 80%, 5000 cycles |
+| Shared degradation constants | PASS | DoD 0.80, 1.6250 Rs/kWh, 26.00 Rs/cycle |
 | $\alpha=0$ matches Phase 2 grid cost | PASS | diff `0.00e+00` Rs |
 | Terminal SOC $\ge SOC_0$ | PASS | min SOC(end) = 0.1000 |
 | Power balance residual | PASS | max 4.44e-16 kW |
@@ -534,11 +512,10 @@ them:
    multi-objective optimisation. Each phase fixes a limitation of the previous
    one, rather than being a disconnected demo.
 2. **A real problem statement, backed by measured numbers and a model update.**
-   Phase 2 saves Rs 25.85/day on electricity. Under the legacy wear model it
-   adds Rs 20.83/day; under the stricter 80%-DoD / 5000-cycle model the same
-   dispatch adds Rs 26.03/day, which flips the total slightly above the
-   no-battery baseline. That is a concrete motivation and a defensible reason
-   for pricing wear inside the objective.
+   Phase 2 saves Rs 25.85/day on electricity but adds Rs 26.03/day of wear,
+   which puts its total slightly above the no-battery baseline
+   (Rs 50.72 vs Rs 50.54/day). That is a concrete motivation and a defensible
+   reason for pricing wear inside the objective.
 3. **Correct formulation.** The objective, constraints, units, and terminal
    condition are stated explicitly. $\alpha$ is dimensionless and its meaning
    is precise.
@@ -562,9 +539,9 @@ them:
 
 ## Suggested Progress-Report Sequence
 
-1. **Motivation** — show the two-model table: legacy wear makes the battery look
-   uneconomic, corrected 80%-DoD / 5000-cycle wear makes it economic. Phase 3
-   asks how much cycling is still worth doing.
+1. **Motivation** — show the shared-model table: the grid-cost winner (Phase 2)
+   is not the total-cost winner, and the naive battery dispatch sits just above
+   the no-battery baseline. Phase 3 asks how much cycling is still worth doing.
 2. **Formulation** — write the objective, the DoD-aware wear term, and the
    terminal-SOC constraint. Explain that $\alpha=1$ means "price wear at its
    modelled cost".
@@ -609,13 +586,11 @@ EFC versus alpha, and one dispatch/SOC pair for the chosen alpha.
 > which cycling windows survive at true wear cost. That is a defensible FYP
 > contribution without overclaiming.
 
-> [!question] "Why keep Phase 2 on the old degradation model?"
-> Because the point of Phase 3 is to isolate the effect of a DoD-aware wear
-> model, not to refactor Phase 2. Phase 2 keeps its legacy 100%-DoD curve
-> (now with 5000-cycle life); Phase 3 introduces the DoD-aware model. For a
-> like-for-like comparison, the Phase 2 dispatch is re-priced under the new
-> model, and the report labels which model produced each number. Migrating
-> Phase 2 is a separate change.
+> [!question] "Why does Phase 2 still not price wear in its objective?"
+> Because Phase 2's role is to be the degradation-unaware baseline; putting
+> wear in its objective would turn it into Phase 3. It still uses the same
+> `battery_degradation.m` model for post-hoc accounting, so the comparison is
+> like-for-like even though the optimiser is blind to wear.
 
 > [!question] "Why constrain terminal SOC?"
 > To stop the optimiser from draining the battery at the horizon edge for free.
@@ -630,7 +605,7 @@ Implemented layout, matching the ticket sequence in [[PHASE3_PLAN]]:
 
 | File | Purpose |
 |---|---|
-| `Matlab/Phase3/battery_degradation_dod.m` | DoD-aware degradation cost (new) |
+| `Matlab/battery_degradation.m` | Shared 80%-DoD degradation cost (all phases) |
 | `Matlab/Phase3/lp_degradation_aware_ems.m` | Phase 3 solver |
 | `Matlab/Phase3/validate_phase3_solution.m` | Phase 3 validator with terminal SOC |
 | `Matlab/Phase3/main_phase3.m` | Standalone driver and plots |
@@ -639,7 +614,7 @@ Implemented layout, matching the ticket sequence in [[PHASE3_PLAN]]:
 | `Matlab/simulate_day.m` | Adds `results.phase3` |
 | `Matlab/run_all_phases.m` | Four-phase comparison table |
 
-Phase 2 files are not modified. Tickets: [[T-001-dod-degradation-model]],
+Phase 2 keeps its grid-only objective but now shares the wear model. Tickets: [[T-001-dod-degradation-model]],
 [[T-002-phase3-solver]], [[T-003-validation]], [[T-004-pipeline-integration]],
 [[T-005-main-phase3]], [[T-006-alpha-sweep]], [[T-007-sunny-cloudy]],
 [[T-008-verification]], [[T-009-docs]].
@@ -655,9 +630,8 @@ Phase 2 files are not modified. Tickets: [[T-001-dod-degradation-model]],
 3. **Linearised degradation at a rated DoD.** The model prices energy
    throughput at 80% DoD; it does not track each cycle's actual depth. Rainflow
    counting is future work.
-4. **Mixed degradation models.** Phase 2 remains on the legacy 5000-cycle
-   model; Phase 3 uses 5000 cycles at 80% DoD. Reprice Phase 2 explicitly when
-   comparing, and label the model in every table.
+4. **One degradation model, one rated DoD.** All phases use 5000 cycles at
+   80% DoD. The model still does not track actual cycle depth.
 5. **5000 cycles is an assumption.** It is plausible for LFP but not taken from
    a specific datasheet. State it as an assumption.
 6. **Perfect foresight.** The LP sees the whole day; MPC with forecast
@@ -675,6 +649,5 @@ Phase 2 files are not modified. Tickets: [[T-001-dod-degradation-model]],
 - [[Phase 3 Results]] — measured Phase 3 results and verification record
 - [[Run All Phases Comparison]] — Phase 0/1/2 results and pipeline
 - [[Simulation Results Report]] — verified Phase 2 numbers used above
-- [[Defensibility Analysis]] — legacy-model economics and the battery-cost
-  caveat; read alongside the updated DoD model, not in place of it
+- [[Defensibility Analysis]] — battery-cost economics under the shared model
 - [[PHASE3_PLAN]] — implementation plan and ticket sequence

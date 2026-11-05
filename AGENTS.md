@@ -33,8 +33,9 @@ Phase 3 raises `lp_degradation_aware_ems:solverFailed` likewise.
     and the printed PASS/FAIL summary.
   - `simulate_day` asserts the Phase 2 and Phase 3 grid and degradation costs
     match an independent recomputation.
-  - `verify_phase3` checks Phase 2 regression, alpha-zero equivalence, terminal
-    SOC, bounds, the cloudy case, and sweep monotonicity.
+  - `verify_phase3` checks Phase 2 regression, that all phases share one wear
+    model, alpha-zero equivalence, terminal SOC, bounds, the cloudy case, and
+    sweep monotonicity.
 - Run `run_all_phases` after changing parameters, dispatch, or cost logic.
   A change is unverified until the validation summary passes.
 
@@ -46,18 +47,16 @@ Phase 3 raises `lp_degradation_aware_ems:solverFailed` likewise.
 - `General Notes/Simulation Results Report.md` holds the verified, measured
   Phase 0/1/2 results. `General Notes/Phase 3 Results.md` holds the verified
   Phase 3 results.
-- `Matlab/Phase2/battery_degradation.m` prices Phase 2 degradation from
-  EFC/throughput using `A_cycle = 5000`, `b_cycle = 1.3`. `DoD` and
-  `LifeCycles` are diagnostics only and must not be used for costing.
-  This gives `c_deg = 1.300 Rs/kWh` throughput (Rs 26.00 per equivalent full
-  cycle). Older notes showing ~Rs 2/day come from a ~59x understated model
-  (corrected in commit `1b40bd8`).
-- `Matlab/Phase3/battery_degradation_dod.m` prices Phase 3 degradation at
-  `DoD_rated = 0.80` and `N_cycles_rated = 5000`, giving
-  `c_deg = 1.6250 Rs/kWh` throughput (Rs 26.00/rated cycle, Rs 32.50/EFC).
-  It is still linear in throughput; per-timestep DoD is diagnostic only.
-- Phase 2 and Phase 3 use **different** degradation models. Label every table;
-  reprice Phase 2 explicitly for like-for-like comparisons.
+- `Matlab/battery_degradation.m` is the one degradation model used by every
+  phase. It prices throughput at `DoD_rated = 0.80` and
+  `N_cycles_rated = 5000`, giving `c_deg = 1.6250 Rs/kWh` throughput
+  (Rs 26.00/rated cycle, Rs 32.50/EFC). It is linear in throughput;
+  per-timestep `DoD` and `LifeCycles` are diagnostics only and must not be
+  used for costing. Older notes showing ~Rs 2/day or a Rs 1.300/kWh legacy
+  model are historical (corrected in commits `1b40bd8` and the unification
+  branch).
+- Phase 2 is degradation-unaware in its LP objective but its dispatch is
+  priced with the same model, so all phase totals are directly comparable.
 - `video/data.js` calls itself the single source of truth but is stale (1.8x
   peak, Rs 150,000, old costs). Re-derive values from the MATLAB files before
   reusing the video.
@@ -70,8 +69,8 @@ Phase 3 raises `lp_degradation_aware_ems:solverFailed` likewise.
   (`rule_based_ems_p1`), Phase 2 = LP (`lp_naive_ems`), Phase 3 =
   degradation-aware LP (`lp_degradation_aware_ems`). The README describes
   Phases 1–6; 0–3 are implemented, Phase 4+ is future work.
-- `battery_degradation.m` lives under `Phase2/` but is also used by Phase 1.
-  Phase 3 uses `Phase3/battery_degradation_dod.m` instead.
+- `Matlab/battery_degradation.m` lives at the `Matlab/` root and is used by
+  Phase 1, Phase 2, and Phase 3. There is no separate legacy model.
 - The LP decision vector is `5N`: `[P_gimp; P_gexp; P_ch; P_dis; P_curt]`, each
   `1:N` and nonnegative. SOC bounds use one lower-triangular cumulative-sum
   inequality, not step-by-step constraints. Phase 3 adds one terminal-SOC row.

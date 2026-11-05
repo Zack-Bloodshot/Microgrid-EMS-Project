@@ -29,7 +29,7 @@ set(gca, 'XTickLabel', {'Phase 0\nBaseline', 'Phase 1\nHeuristic', 'Phase 2\nLP'
 ylabel('Daily cost [Rs/day]'); ylim([0 75]);
 legend('Grid energy cost', 'Battery degradation', 'Location', 'northwest');
 title({'Daily cost breakdown (sunny day)', ...
-    'Degradation priced at Rs 26.00 per equivalent full cycle'});
+    'Degradation priced at Rs 32.50 per equivalent full cycle (80% DoD, 5000 cycles)'});
 print(f, fullfile(outdir, 'cost-breakdown.png'), '-dpng', '-r150'); close(f);
 end
 
@@ -135,7 +135,7 @@ end
 function fig5_breakeven(p, outdir)
 [pp, ~] = generate_pv_profile(p); [pl, ~] = generate_load_profile(p);
 r = simulate_day(pp, pl, p, tariff_params());
-cpl = p.Cost_replacement / p.A_cycle;
+cpl = p.Cost_replacement / (p.N_cycles_rated * p.DoD_rated);
 annual_save = (r.phase0.grid_cost - r.phase2.grid_cost) * 365;
 annual_deg   = r.phase2.EFC * cpl * 365;
 years = 0:1:20;
@@ -151,7 +151,7 @@ xlabel('Years'); ylabel('Cumulative value [Rs]');
 legend('Cumulative bill savings', 'Cumulative battery degradation', ...
     'Net benefit', 'Battery replacement cost', 'Location', 'northwest');
 title({'Cumulative economics over battery life', ...
-    sprintf('Life %.1f yr - legacy arbitrage margin is thin', ...
-    p.A_cycle / (r.phase2.EFC * 365))});
+    sprintf('Life %.1f yr at 80%% DoD - arbitrage margin is thin', ...
+    p.N_cycles_rated * p.DoD_rated / (r.phase2.EFC * 365))});
 print(f, fullfile(outdir, 'breakeven.png'), '-dpng', '-r150'); close(f);
 end

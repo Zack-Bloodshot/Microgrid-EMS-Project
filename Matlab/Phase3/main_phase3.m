@@ -7,11 +7,12 @@
 %     4) Load tariff data                     (tariff_params)
 %     5) Solve the degradation-aware LP       (lp_degradation_aware_ems)
 %     6) Validate the result                  (validate_phase3_solution)
-%     7) Quantify DoD-aware degradation       (battery_degradation_dod)
+%     7) Quantify degradation                  (battery_degradation, shared)
 %     8) Plot PV/load, dispatch, SOC, curtailment, and DoD
 %
 %   The headline case uses alpha = 1, i.e. battery wear is priced at its
-%   modelled cost. Phase 2 remains frozen on its legacy degradation model.
+%   modelled cost. Every phase uses the same wear model, so the reported
+%   degradation costs are directly comparable.
 
 clear; clc; close all;
 
@@ -51,10 +52,10 @@ end
 
 %% 4) Degradation diagnostics
 [deg_cost_check, EFC, DoD, LifeCycles] = ...
-    battery_degradation_dod(P_ch, P_dis, params);
+    battery_degradation(P_ch, P_dis, params);
 assert(abs(deg_cost_check - deg_cost) < 1e-9, ...
     'main_phase3:degCostMismatch', ...
-    'deg_cost from lp_degradation_aware_ems and battery_degradation_dod disagree.');
+    'deg_cost from lp_degradation_aware_ems and battery_degradation disagree.');
 
 %% 5) Plots
 time_soc = (0:params.N) * params.dt;
