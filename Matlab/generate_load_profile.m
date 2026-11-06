@@ -2,7 +2,7 @@ function [P_load, time_vec] = generate_load_profile(params)
 %GENERATE_LOAD_PROFILE Deterministic synthetic 24-hour load profile.
 %
 % Includes morning, afternoon and evening demand peaks so that
-% the Phase 1 greedy EMS and Phase 2 cost-optimized EMS
+% the Stage 1 greedy EMS and Stage 2 cost-optimized EMS
 % exhibit a meaningful difference in battery scheduling.
 
     time_vec = (0:params.N-1) * params.dt;

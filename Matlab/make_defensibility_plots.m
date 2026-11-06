@@ -20,12 +20,12 @@ end
 function fig1_cost_breakdown(p, outdir)
 [pp, ~] = generate_pv_profile(p); [pl, ~] = generate_load_profile(p);
 r = simulate_day(pp, pl, p, tariff_params());
-g = [r.phase0.grid_cost, r.phase1.grid_cost, r.phase2.grid_cost];
-d = [r.phase0.degradation_cost, r.phase1.degradation_cost, r.phase2.degradation_cost];
+g = [r.stage0.grid_cost, r.stage1.grid_cost, r.stage2.grid_cost];
+d = [r.stage0.degradation_cost, r.stage1.degradation_cost, r.stage2.degradation_cost];
 
 f = figure('Visible', 'off', 'Color', 'w', 'Position', [100 100 900 520]);
 bar([g(:), d(:)], 'stacked'); grid on;
-set(gca, 'XTickLabel', {'Phase 0\nBaseline', 'Phase 1\nHeuristic', 'Phase 2\nLP'});
+set(gca, 'XTickLabel', {'Stage 0\nBaseline', 'Stage 1\nHeuristic', 'Stage 2\nLP'});
 ylabel('Daily cost [Rs/day]'); ylim([0 75]);
 legend('Grid energy cost', 'Battery degradation', 'Location', 'northwest');
 title({'Daily cost breakdown (sunny day)', ...
@@ -53,7 +53,7 @@ for i = 1:5
         t = tariff_params(ov);
         pv = generate_pv_profile(p2) * ps; pl = generate_load_profile(p2) * ls;
         rr = simulate_day(pv, pl, p2, t);
-        g(j) = rr.phase1.grid_cost - rr.phase2.grid_cost;   % abs, Rs/day
+        g(j) = rr.stage1.grid_cost - rr.stage2.grid_cost;   % abs, Rs/day
     end
     gap(i) = mean(g); base_gap(i) = 100 * mean(g) / 50.54;
 end
@@ -77,8 +77,8 @@ t = tariff_params();
 rS = simulate_day(pp, pl, p, t);
 [cp, ~] = cloudy_profile_1(p);
 rC = simulate_day(cp, pl, p, t);
-gS = 100 * (rS.phase1.grid_cost - rS.phase2.grid_cost) / rS.phase1.grid_cost;
-gC = 100 * (rC.phase1.grid_cost - rC.phase2.grid_cost) / rC.phase1.grid_cost;
+gS = 100 * (rS.stage1.grid_cost - rS.stage2.grid_cost) / rS.stage1.grid_cost;
+gC = 100 * (rC.stage1.grid_cost - rC.stage2.grid_cost) / rC.stage1.grid_cost;
 
 f = figure('Visible', 'off', 'Color', 'w', 'Position', [100 100 780 480]);
 X = [11.17 14.80; gS gC];
@@ -112,15 +112,15 @@ patch([9 17 17 9], [yl(1) yl(1) yl(2) yl(2)], [0.9 0.95 1.0], ...
     'FaceAlpha', 0.6, 'EdgeColor', 'none');
 patch([17 22 22 17], [yl(1) yl(1) yl(2) yl(2)], [1.0 0.93 0.93], ...
     'FaceAlpha', 0.7, 'EdgeColor', 'none');
-plot(tv, r.phase1.P_gimp, 'Color', [0.00 0.45 0.74], 'LineWidth', 1.4);
+plot(tv, r.stage1.P_gimp, 'Color', [0.00 0.45 0.74], 'LineWidth', 1.4);
 grid on; xlim([0 24]); ylim(yl);
 xlabel('Time [h]'); ylabel('Power [kW]');
 legend('P_{pv}', 'P_{load}', 'P_{g,imp} (heuristic)', 'Location', 'northwest');
 title('Sunny day: PV, load and heuristic grid import');
 
 subplot(2,1,2);
-plot([tv, 24], r.phase1.SOC, 'LineWidth', 1.8, 'Color', [0.49 0.18 0.56]); hold on;
-plot([tv, 24], r.phase2.SOC, 'LineWidth', 1.8, 'Color', [0.00 0.60 0.25]);
+plot([tv, 24], r.stage1.SOC, 'LineWidth', 1.8, 'Color', [0.49 0.18 0.56]); hold on;
+plot([tv, 24], r.stage2.SOC, 'LineWidth', 1.8, 'Color', [0.00 0.60 0.25]);
 yl2 = [0 1];
 patch([9 17 17 9], [yl2(1) yl2(1) yl2(2) yl2(2)], [0.9 0.95 1.0], 'FaceAlpha', 0.6, 'EdgeColor', 'none');
 patch([17 22 22 17], [yl2(1) yl2(1) yl2(2) yl2(2)], [1.0 0.93 0.93], 'FaceAlpha', 0.7, 'EdgeColor', 'none');
@@ -136,8 +136,8 @@ function fig5_breakeven(p, outdir)
 [pp, ~] = generate_pv_profile(p); [pl, ~] = generate_load_profile(p);
 r = simulate_day(pp, pl, p, tariff_params());
 cpl = p.Cost_replacement / (p.N_cycles_rated * p.DoD_rated);
-annual_save = (r.phase0.grid_cost - r.phase2.grid_cost) * 365;
-annual_deg   = r.phase2.EFC * cpl * 365;
+annual_save = (r.stage0.grid_cost - r.stage2.grid_cost) * 365;
+annual_deg   = r.stage2.EFC * cpl * 365;
 years = 0:1:20;
 
 f = figure('Visible', 'off', 'Color', 'w', 'Position', [100 100 860 520]);
@@ -152,6 +152,6 @@ legend('Cumulative bill savings', 'Cumulative battery degradation', ...
     'Net benefit', 'Battery replacement cost', 'Location', 'northwest');
 title({'Cumulative economics over battery life', ...
     sprintf('Life %.1f yr at 80%% DoD - arbitrage margin is thin', ...
-    p.N_cycles_rated * p.DoD_rated / (r.phase2.EFC * 365))});
+    p.N_cycles_rated * p.DoD_rated / (r.stage2.EFC * 365))});
 print(f, fullfile(outdir, 'breakeven.png'), '-dpng', '-r150'); close(f);
 end

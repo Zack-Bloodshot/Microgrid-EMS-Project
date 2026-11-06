@@ -63,6 +63,6 @@ A standard electrical load (such as a motor, air conditioner, or heater) is a pa
 ---
 
 ## 3. Summary Statement
-To a DISCOM, a battery is a **Distributed Energy Resource (DER)**. While it acts as a load during its charging phase, its ability to discharge and offset grid draw changes the electrical dynamics of the grid connection. This dual capability is why utilities enforce specialized interconnection, safety, and bi-directional metering protocols for hybrid installations.
+To a DISCOM, a battery is a **Distributed Energy Resource (DER)**. While it acts as a load during its charging stage, its ability to discharge and offset grid draw changes the electrical dynamics of the grid connection. This dual capability is why utilities enforce specialized interconnection, safety, and bi-directional metering protocols for hybrid installations.
 
 ---

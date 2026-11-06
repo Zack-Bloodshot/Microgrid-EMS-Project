@@ -66,7 +66,7 @@ run_comparison()
   │     │     └── lp_degradation_aware_ems() → LP aware (wear priced)
   │     └── energy_summary()           → kWh consumed/import/export per case
   ├── plot_comparison()               → cost bars + 24h dispatch plots
-  └── plot_ems_comparison()           → per-phase SOC / curtailment plots
+  └── plot_ems_comparison()           → per-stage SOC / curtailment plots
 ```
 
 ### Key Design Decisions
@@ -106,7 +106,7 @@ calibrated, scaled, or substituted after the run.
 **Grid cost** is the electricity charge alone — the basis used by most
 published EMS comparisons. **Total cost** adds battery degradation at
 Rs 32.50 per equivalent full cycle (80%-DoD, 5000-cycle model), applied
-identically to every phase.
+identically to every stage.
 
 ### Sunny Day
 
@@ -151,7 +151,7 @@ it is bought is.
 >
 > **The degradation-aware LP keeps the heuristic's cycling level and wins
 > clearly: Rs 86.13/day, Rs 5.09 below the naive LP and Rs 1.01 below the
-> no-battery baseline.** See [[Phase 3 Results]].
+> no-battery baseline.** See [[Stage 3 Results]].
 
 ### Why the Heuristic Underperforms on Cloudy Days
 
@@ -176,11 +176,11 @@ over-cycling entirely.
 - `Matlab/Comparison/run_comparison.m` — main entry point
 - `Matlab/Comparison/prepare_cloudy_comparison.m` — simulation runner
 - `Matlab/Comparison/plot_comparison.m` — cost bars + dispatch plots
-- `Matlab/Comparison/plot_ems_comparison.m` — per-phase SOC / curtailment plots
+- `Matlab/Comparison/plot_ems_comparison.m` — per-stage SOC / curtailment plots
 - `Matlab/Comparison/cloudy_profile_1.m` — cloudy PV profile generator
-- `Matlab/Phase0/rule_based_ems_p0.m` — baseline controller
-- `Matlab/Phase1/rule_based_ems_p1.m` — heuristic controller
-- `Matlab/Phase2/lp_naive_ems.m` — LP controller
+- `Matlab/Stage0/rule_based_ems_p0.m` — baseline controller
+- `Matlab/Stage1/rule_based_ems_p1.m` — heuristic controller
+- `Matlab/Stage2/lp_naive_ems.m` — LP controller
 - `Matlab/tariff_params.m` — APDCL tariff data
 - `Matlab/calculate_costs.m` — cost calculation with slab + ToD rates
 
@@ -188,8 +188,8 @@ over-cycling entirely.
 
 ## Related Notes
 
-- [[README]] — full project architecture and phase breakdown
+- [[README]] — full project architecture and stage breakdown
 - [[Objectives and Benefits]] — value proposition and applications
 - [[Evidence]] — regulatory and utility justification
-- [[Phase 1 (Implementation)]] — heuristic EMS details
-- [[phase_2_implementation]] — LP formulation details
+- [[Stage 1 (Implementation)]] — heuristic EMS details
+- [[stage_2_implementation]] — LP formulation details

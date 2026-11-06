@@ -15,10 +15,10 @@ function outputs = generate_presentation_outputs()
 
     matlab_dir = fileparts(mfilename('fullpath'));
     addpath(matlab_dir, ...
-        fullfile(matlab_dir, 'Phase0'), ...
-        fullfile(matlab_dir, 'Phase1'), ...
-        fullfile(matlab_dir, 'Phase2'), ...
-        fullfile(matlab_dir, 'Phase3'), ...
+        fullfile(matlab_dir, 'Stage0'), ...
+        fullfile(matlab_dir, 'Stage1'), ...
+        fullfile(matlab_dir, 'Stage2'), ...
+        fullfile(matlab_dir, 'Stage3'), ...
         fullfile(matlab_dir, 'Comparison'));
 
     params = system_params();
@@ -63,7 +63,7 @@ function outputs = generate_presentation_outputs()
 end
 
 function save_cost_figure(sunny, cloudy, assets_dir)
-    phases = {'Phase 0', 'Phase 1', 'Phase 2', 'Phase 3'};
+    stages = {'Stage 0', 'Stage 1', 'Stage 2', 'Stage 3'};
     scenarios = {sunny, cloudy};
     daily = zeros(2, 4);
     grid_cost = zeros(2, 4);
@@ -71,13 +71,13 @@ function save_cost_figure(sunny, cloudy, assets_dir)
 
     for s = 1:2
         r = scenarios{s};
-        daily(s, :) = [r.phase0.total_cost, r.phase1.total_cost, ...
-            r.phase2.total_cost, r.phase3.total_cost];
-        grid_cost(s, :) = [r.phase0.grid_cost, r.phase1.grid_cost, ...
-            r.phase2.grid_cost, r.phase3.grid_cost];
-        degradation(s, :) = [r.phase0.degradation_cost, ...
-            r.phase1.degradation_cost, r.phase2.degradation_cost, ...
-            r.phase3.degradation_cost];
+        daily(s, :) = [r.stage0.total_cost, r.stage1.total_cost, ...
+            r.stage2.total_cost, r.stage3.total_cost];
+        grid_cost(s, :) = [r.stage0.grid_cost, r.stage1.grid_cost, ...
+            r.stage2.grid_cost, r.stage3.grid_cost];
+        degradation(s, :) = [r.stage0.degradation_cost, ...
+            r.stage1.degradation_cost, r.stage2.degradation_cost, ...
+            r.stage3.degradation_cost];
     end
 
     fig = figure('Visible', 'off', 'Color', 'w', ...
@@ -87,7 +87,7 @@ function save_cost_figure(sunny, cloudy, assets_dir)
     nexttile;
     bar(daily.');
     grid on;
-    set(gca, 'XTick', 1:4, 'XTickLabel', phases);
+    set(gca, 'XTick', 1:4, 'XTickLabel', stages);
     ylabel('Total cost [Rs/day]');
     title('Total cost');
     legend('Sunny', 'Cloudy', 'Location', 'northwest');
@@ -95,7 +95,7 @@ function save_cost_figure(sunny, cloudy, assets_dir)
     nexttile;
     bar([grid_cost(1, :).', degradation(1, :).'], 'stacked');
     grid on;
-    set(gca, 'XTick', 1:4, 'XTickLabel', phases);
+    set(gca, 'XTick', 1:4, 'XTickLabel', stages);
     ylabel('Cost [Rs/day]');
     title('Sunny-day cost components');
     legend('Grid', 'Battery wear', 'Location', 'northwest');
@@ -103,17 +103,17 @@ function save_cost_figure(sunny, cloudy, assets_dir)
     nexttile;
     bar([grid_cost(2, :).', degradation(2, :).'], 'stacked');
     grid on;
-    set(gca, 'XTick', 1:4, 'XTickLabel', phases);
+    set(gca, 'XTick', 1:4, 'XTickLabel', stages);
     ylabel('Cost [Rs/day]');
     title('Cloudy-day cost components');
     legend('Grid', 'Battery wear', 'Location', 'northwest');
 
     nexttile;
-    efc = [0, sunny.phase1.EFC, sunny.phase2.EFC, sunny.phase3.EFC; ...
-        0, cloudy.phase1.EFC, cloudy.phase2.EFC, cloudy.phase3.EFC];
+    efc = [0, sunny.stage1.EFC, sunny.stage2.EFC, sunny.stage3.EFC; ...
+        0, cloudy.stage1.EFC, cloudy.stage2.EFC, cloudy.stage3.EFC];
     bar(efc.');
     grid on;
-    set(gca, 'XTick', 1:4, 'XTickLabel', phases);
+    set(gca, 'XTick', 1:4, 'XTickLabel', stages);
     ylabel('Equivalent full cycles/day');
     title('Battery cycling');
     legend('Sunny', 'Cloudy', 'Location', 'northwest');
@@ -135,7 +135,7 @@ function save_dispatch_figure(sunny, cloudy, sunny_pv, cloudy_pv, ...
 
     for i = 1:2
         r = cases{i};
-        p = r.phase3;
+        p = r.stage3;
         nexttile;
         plot(time, pv_profiles{i}, 'LineWidth', 1.5); hold on;
         plot(time, load_profile, 'LineWidth', 1.5);
@@ -144,7 +144,7 @@ function save_dispatch_figure(sunny, cloudy, sunny_pv, cloudy_pv, ...
         yline(0, 'k-');
         grid on; xlim([0 24]);
         xlabel('Time [h]'); ylabel('Power [kW]');
-        title(sprintf('%s: Phase 3 power dispatch', names{i}));
+        title(sprintf('%s: Stage 3 power dispatch', names{i}));
         legend('PV', 'Load', 'Grid import', '-Grid export', ...
             'Location', 'northwest');
 
@@ -156,12 +156,12 @@ function save_dispatch_figure(sunny, cloudy, sunny_pv, cloudy_pv, ...
         yline(params.SOC0, 'k:');
         grid on; xlim([0 24]); ylim([0 1]);
         xlabel('Time [h]'); ylabel('SOC [-]');
-        title(sprintf('%s: Phase 3 battery SOC', names{i}));
+        title(sprintf('%s: Stage 3 battery SOC', names{i}));
         legend('SOC', 'SOC limits', '', 'Initial SOC', ...
             'Location', 'best');
     end
 
-    sgtitle('Phase 3 behavior in two weather conditions');
+    sgtitle('Stage 3 behavior in two weather conditions');
     exportgraphics(fig, fullfile(assets_dir, ...
         'presentation-dispatch-soc.png'), 'Resolution', 180);
     close(fig);
@@ -191,7 +191,7 @@ function save_alpha_figure(assets_dir)
     title('Battery cycling and grid cost trade-off');
     legend('EFC', 'Grid cost', 'Location', 'best');
 
-    sgtitle('Phase 3 sensitivity to battery-wear valuation');
+    sgtitle('Stage 3 sensitivity to battery-wear valuation');
     exportgraphics(fig, fullfile(assets_dir, ...
         'presentation-alpha-sweep.png'), 'Resolution', 180);
     close(fig);
@@ -200,17 +200,17 @@ end
 function summary = make_summary(sunny, cloudy)
     scenario = {'Sunny'; 'Sunny'; 'Sunny'; 'Sunny'; ...
         'Cloudy'; 'Cloudy'; 'Cloudy'; 'Cloudy'};
-    controller = {'Phase 0'; 'Phase 1'; 'Phase 2'; 'Phase 3'; ...
-        'Phase 0'; 'Phase 1'; 'Phase 2'; 'Phase 3'};
-    runs = {sunny.phase0; sunny.phase1; sunny.phase2; sunny.phase3; ...
-        cloudy.phase0; cloudy.phase1; cloudy.phase2; cloudy.phase3};
+    controller = {'Stage 0'; 'Stage 1'; 'Stage 2'; 'Stage 3'; ...
+        'Stage 0'; 'Stage 1'; 'Stage 2'; 'Stage 3'};
+    runs = {sunny.stage0; sunny.stage1; sunny.stage2; sunny.stage3; ...
+        cloudy.stage0; cloudy.stage1; cloudy.stage2; cloudy.stage3};
 
     grid_cost = cellfun(@(r) r.grid_cost, runs);
     degradation_cost = cellfun(@(r) r.degradation_cost, runs);
     total_cost = cellfun(@(r) r.total_cost, runs);
     efc = zeros(8, 1);
-    efc(2:4) = [sunny.phase1.EFC; sunny.phase2.EFC; sunny.phase3.EFC];
-    efc(6:8) = [cloudy.phase1.EFC; cloudy.phase2.EFC; cloudy.phase3.EFC];
+    efc(2:4) = [sunny.stage1.EFC; sunny.stage2.EFC; sunny.stage3.EFC];
+    efc(6:8) = [cloudy.stage1.EFC; cloudy.stage2.EFC; cloudy.stage3.EFC];
 
     summary = table(scenario, controller, grid_cost, degradation_cost, ...
         total_cost, efc, 'VariableNames', {'Scenario', 'Controller', ...

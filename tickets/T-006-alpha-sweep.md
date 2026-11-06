@@ -3,7 +3,7 @@ id: T-006
 title: Add alpha sweep and trade-off plot
 status: done
 depends_on: [T-002, T-004]
-phase: 3
+stage: 3
 ---
 
 # T-006 — Add alpha sweep and trade-off plot
@@ -15,8 +15,8 @@ and locate where the controller stops cycling the battery.
 
 ## Files
 
-- `Matlab/Phase3/run_alpha_sweep.m` (new)
-- `General Notes/assets/phase3-alpha-sweep.png` (generated, committed)
+- `Matlab/Stage3/run_alpha_sweep.m` (new)
+- `General Notes/assets/stage3-alpha-sweep.png` (generated, committed)
 
 ## Interface
 
@@ -55,7 +55,7 @@ do not remove the low end.
 3. Total physical cost vs alpha.
 4. EFC vs alpha.
 
-Save to `General Notes/assets/phase3-alpha-sweep.png` with
+Save to `General Notes/assets/stage3-alpha-sweep.png` with
 `print(..., '-dpng', '-r150')`.
 
 ## Knee definition
@@ -89,4 +89,4 @@ sweep.knee_alpha
 ## Completion
 
 - Commit: pending
-- Notes: Implemented and verified with `verify_phase3` (OVERALL PASS).
+- Notes: Implemented and verified with `verify_stage3` (OVERALL PASS).

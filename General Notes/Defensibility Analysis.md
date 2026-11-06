@@ -66,7 +66,7 @@ that — you checked against prior art and landed in the same place.
 
 ![[assets/soc-timing.png|820]]
 
-Phase 1 and Phase 2 move **identical energy** — 5.433 kWh imported,
+Stage 1 and Stage 2 move **identical energy** — 5.433 kWh imported,
 2.909 kWh exported, EFC 0.801 each — yet differ by Rs 4.29/day. The
 saving reconciles exactly:
 
@@ -161,7 +161,7 @@ changed real conclusions** — see §6.
 **Why SOC₀ = 0.1 is the right choice:** at that setting the battery
 starts *and ends* the day empty, so no unpriced opening inventory
 inflates the result. It is the conservative setting. Verified: all three
-phases end at SOC 0.100.
+stages end at SOC 0.100.
 
 ---
 
@@ -169,7 +169,7 @@ phases end at SOC 0.100.
 
 ![[assets/cost-breakdown.png|720]]
 
-| Phase | Grid/day | Degradation/day | Total/day |
+| Stage | Grid/day | Degradation/day | Total/day |
 |-------|----------|-----------------|-----------|
 | 0 Baseline | Rs 50.54 | Rs 0.00 | **Rs 50.54** |
 | 1 Heuristic | Rs 28.97 | Rs 26.03 | **Rs 55.01** |
@@ -181,7 +181,7 @@ Read this carefully — it is the most important table in your project.
 **Under the shared 80%-DoD, 5000-cycle model, the naive battery dispatch does
 not pay for itself** (Rs 50.72 vs Rs 50.54/day). It halves the electricity bill,
 but the wear cost more than cancels the saving, and the heuristic is clearly
-worse (Rs 55.01). Only the degradation-aware Phase 3 controller beats doing
+worse (Rs 55.01). Only the degradation-aware Stage 3 controller beats doing
 nothing (Rs 48.97).
 
 That is exactly the tension a real FYP should surface: the optimiser is not
@@ -263,7 +263,7 @@ what a stochastic/robust EMS does:
 **Say:** *"My EMS is price-driven and holds no outage reserve — if the
 grid drops at 22:00 with the heuristic, I'm at 0.1 SOC with no backup.
 That's a deliberate scope boundary, and the fix is a reserve SOC
-constraint or stochastic MPC, which is my next phase."*
+constraint or stochastic MPC, which is my next stage."*
 
 Naming the gap first is much stronger than being caught by it.
 
@@ -326,7 +326,7 @@ Naming the gap first is much stronger than being caught by it.
 Sweeps call the production pipeline unchanged, passing overrides through
 `tariff_params(overrides)` → `simulate_day(pv, load, params, tariff)`.
 No controller logic was modified. Default output is unchanged by the
-override plumbing (verified: Rs 50.54 / 28.97 / 24.69 grid for Phases 0/1/2).
+override plumbing (verified: Rs 50.54 / 28.97 / 24.69 grid for Stages 0/1/2).
 
 Plots regenerate with `make_defensibility_plots()`.
 

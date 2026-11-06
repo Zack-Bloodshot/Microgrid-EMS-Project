@@ -16,18 +16,18 @@ colorlinks: true
 
 # Source & Scope Note
 
-This document is derived from the project specification **`Plan.md`** ("Design & Modelling of a Cost-Optimized EMS for a Grid-Tied PV Microgrid"), which is treated throughout as the **primary source of truth** for scope, phase structure, and terminology. Two reconciliation decisions were made explicit rather than silent:
+This document is derived from the project specification **`Plan.md`** ("Design & Modelling of a Cost-Optimized EMS for a Grid-Tied PV Microgrid"), which is treated throughout as the **primary source of truth** for scope, stage structure, and terminology. Two reconciliation decisions were made explicit rather than silent:
 
-- **Project assumption:** `Plan.md`'s six-phase structure (Heuristic → Naive LP → Degradation-Aware Optimization → Benchmarking/Sensitivity → MPC → Dashboard) is used as the project backbone. Peak-demand/peak-shaving content is included as an **optional extension** attached to Phase 3, not as a mandatory seventh phase.
-- **Optional implementation choice:** `Plan.md` lists both Convex/Quadratic Programming and metaheuristics (PSO/GA) as candidate solvers for Phase 3. This blueprint recommends **Quadratic Programming (`quadprog`)** as the primary path because it keeps the project inside the LP→QP solver family already established in Phase 2, and lists PSO/GA as an optional alternative for comparison, not a requirement.
+- **Project assumption:** `Plan.md`'s six-stage structure (Heuristic → Naive LP → Degradation-Aware Optimization → Benchmarking/Sensitivity → MPC → Dashboard) is used as the project backbone. Peak-demand/peak-shaving content is included as an **optional extension** attached to Stage 3, not as a mandatory seventh stage.
+- **Optional implementation choice:** `Plan.md` lists both Convex/Quadratic Programming and metaheuristics (PSO/GA) as candidate solvers for Stage 3. This blueprint recommends **Quadratic Programming (`quadprog`)** as the primary path because it keeps the project inside the LP→QP solver family already established in Stage 2, and lists PSO/GA as an optional alternative for comparison, not a requirement.
 
 Every numerical result, plot, and table in this document is a **placeholder** (`[INSERT SIMULATION RESULT]`, `[INSERT FIGURE]`, `[INSERT VALUE]`) unless explicitly marked otherwise. No simulation has been run to produce this document. All MATLAB code is boilerplate meant to be executed by you, not pre-verified output.
 
 # Part 1 — Project Restructuring & Execution Plan
 
-## 1.1 Phase-by-Phase Breakdown
+## 1.1 Stage-by-Stage Breakdown
 
-### Phase 1 — Baseline Heuristic Model (Rule-Based EMS)
+### Stage 1 — Baseline Heuristic Model (Rule-Based EMS)
 
 | Item | Detail |
 |---|---|
@@ -39,12 +39,12 @@ Every numerical result, plot, and table in this document is a **placeholder** (`
 | Required data | PV profile, load profile |
 | Expected plots | Power balance vs. time, SOC vs. time |
 | Validation | Power balance residual ≈ 0; SOC never exceeds bounds |
-| Gate to next phase | Baseline dispatch runs cleanly for a full 24 h profile with zero constraint violations |
+| Gate to next stage | Baseline dispatch runs cleanly for a full 24 h profile with zero constraint violations |
 | Expected difficulty | Low |
 | Approx. effort | 3–5 days |
 | Potential problems | Ambiguous priority ordering during simultaneous PV surplus and low SOC; boundary handling at $SOC_{min}$/$SOC_{max}$ |
 
-### Phase 2 — Cost Optimization Without Degradation Constraints (Naive LP)
+### Stage 2 — Cost Optimization Without Degradation Constraints (Naive LP)
 
 | Item | Detail |
 |---|---|
@@ -53,47 +53,47 @@ Every numerical result, plot, and table in this document is a **placeholder** (`
 | Outputs | Optimal $P_{batt}(k)$, $P_{grid}(k)$, $SOC(k)$; post-hoc degradation cost |
 | Mathematical model | LP (Part 6) |
 | MATLAB implementation | `build_lp_problem.m`, `run_lp_ems.m` |
-| Required data | Same as Phase 1 + tariff profile |
-| Expected plots | Dispatch vs. time, cost comparison vs. Phase 1, SOC cycling pattern |
+| Required data | Same as Stage 1 + tariff profile |
+| Expected plots | Dispatch vs. time, cost comparison vs. Stage 1, SOC cycling pattern |
 | Validation | `linprog` exit flag = 1; power balance holds at every step |
-| Gate to next phase | Naive LP cost savings demonstrated **and** post-simulation degradation cost quantified (this contrast is the intended narrative motivating Phase 3) |
+| Gate to next stage | Naive LP cost savings demonstrated **and** post-simulation degradation cost quantified (this contrast is the intended narrative motivating Stage 3) |
 | Expected difficulty | Medium |
 | Approx. effort | 1–2 weeks |
 | Potential problems | Infeasibility from overly tight SOC/power bounds; simultaneous charge/discharge artifacts (Part 3) |
 
-### Phase 3 — Degradation-Aware Optimization
+### Stage 3 — Degradation-Aware Optimization
 
 | Item | Detail |
 |---|---|
 | Objective | Balance grid cost against battery degradation cost in one objective |
-| Inputs | Phase 2 inputs + degradation cost parameters ($\alpha$, replacement cost, DoD-life curve) |
-| Outputs | Degradation-aware optimal dispatch; comparison against Phase 2 |
+| Inputs | Stage 2 inputs + degradation cost parameters ($\alpha$, replacement cost, DoD-life curve) |
+| Outputs | Degradation-aware optimal dispatch; comparison against Stage 2 |
 | Mathematical model | Weighted multi-term objective (Part 11–12) |
 | MATLAB implementation | `calculate_degradation.m`, degradation-aware `build_lp_problem.m` variant or `quadprog`-based solver |
 | Required data | Battery cycle-life vs. DoD curve (literature-derived) |
 | Expected plots | Grid cost vs. degradation cost trade-off curve, SOC cycling comparison (naive vs. aware) |
 | Validation | Degradation-aware schedule shows measurably fewer/shallower cycles than naive schedule for the same input profiles |
-| Gate to next phase | Trade-off behaviour confirmed across $\alpha$ sweep |
+| Gate to next stage | Trade-off behaviour confirmed across $\alpha$ sweep |
 | Expected difficulty | Medium–High |
 | Approx. effort | 1.5–2.5 weeks |
 | Potential problems | Non-convexity if degradation term is not linearized/quadratic; weight ($\alpha$) has no natural units — needs normalization (Part 12) |
 
-### Phase 4 — Comparative Benchmarking & Sensitivity Analysis
+### Stage 4 — Comparative Benchmarking & Sensitivity Analysis
 
 | Item | Detail |
 |---|---|
 | Objective | Quantify performance across controllers and operating scenarios |
-| Inputs | Outputs of Phases 1–3 across a scenario matrix |
+| Inputs | Outputs of Stages 1–3 across a scenario matrix |
 | Outputs | Comparison table, sensitivity plots |
 | MATLAB implementation | `calculate_metrics.m`, `run_sensitivity_sweep.m` |
 | Expected plots | Battery capacity vs. savings, tariff spread vs. utilization, etc. (Part 14) |
 | Validation | Consistent metric definitions applied identically across all controllers |
-| Gate to next phase | Full comparison matrix populated for all three controllers under at least the essential scenarios |
+| Gate to next stage | Full comparison matrix populated for all three controllers under at least the essential scenarios |
 | Expected difficulty | Medium |
 | Approx. effort | 1–1.5 weeks |
 | Potential problems | Combinatorial explosion of scenario × sensitivity runs; keep essential set small (Part 13) |
 
-### Phase 5 — MPC & Real-Data Validation
+### Stage 5 — MPC & Real-Data Validation
 
 | Item | Detail |
 |---|---|
@@ -103,12 +103,12 @@ Every numerical result, plot, and table in this document is a **placeholder** (`
 | MATLAB implementation | `run_mpc.m`, reusing `build_lp_problem.m` |
 | Expected plots | MPC vs. day-ahead LP dispatch and cost; forecast error sensitivity |
 | Validation | MPC feasibility maintained at every re-optimization step; graceful degradation under forecast error |
-| Gate to next phase | MPC loop runs stably over a full simulated day |
+| Gate to next stage | MPC loop runs stably over a full simulated day |
 | Expected difficulty | High |
 | Approx. effort | 2 weeks |
 | Potential problems | Real data acquisition may not materialize in time — synthetic fallback must be planned (Part 18) |
 
-### Phase 6 — MATLAB App Designer Dashboard
+### Stage 6 — MATLAB App Designer Dashboard
 
 | Item | Detail |
 |---|---|
@@ -117,7 +117,7 @@ Every numerical result, plot, and table in this document is a **placeholder** (`
 | Outputs | `.mlapp` dashboard |
 | Expected difficulty | Medium (UI work, not algorithmic) |
 | Approx. effort | 1 week |
-| Potential problems | Time-consuming polish with low marginal grading return if earlier phases are incomplete — this is the correct thing to cut first under time pressure |
+| Potential problems | Time-consuming polish with low marginal grading return if earlier stages are incomplete — this is the correct thing to cut first under time pressure |
 
 ## 1.2 Dependency Graph
 
@@ -126,30 +126,30 @@ System Model (Part 2)
         |
 Discrete Battery Model + Power Balance (Parts 3-4)
         |
-   Rule-Based EMS (Phase 1)
+   Rule-Based EMS (Stage 1)
         |
    Baseline Results  ---------------------.
         |                                 |
    LP Formulation + Tariff Model           |
-   (Phase 2)                               |
+   (Stage 2)                               |
         |                                 |
    Naive Optimized Results                 |
         |                                  |
    Post-hoc Degradation Quantification -----'
         |
-   Degradation-Aware Objective (Phase 3)
+   Degradation-Aware Objective (Stage 3)
         |
    Degradation-Aware Results
         |
-   Comparative Benchmarking (Phase 4)
+   Comparative Benchmarking (Stage 4)
         |
-   Sensitivity Analysis (Phase 4)
+   Sensitivity Analysis (Stage 4)
         |
-   MPC (Phase 5)
+   MPC (Stage 5)
         |
    Simulink Cross-Check (Part 19, optional)
         |
-   Dashboard (Phase 6)
+   Dashboard (Stage 6)
         |
    Report + Viva Prep
 ```
@@ -241,15 +241,15 @@ If $P_{ch}(k)$ and $P_{dis}(k)$ are both left as independent non-negative contin
 
 **A. Mixed-integer formulation (rigorous).** Introduce a binary $b(k) \in \{0,1\}$ per step:
 $$P_{ch}(k) \le b(k)\, P_{ch,max}, \qquad P_{dis}(k) \le (1-b(k))\, P_{dis,max}$$
-This guarantees mutual exclusivity but converts the problem from LP to MILP, requiring `intlinprog` instead of `linprog`, with materially higher solve time (relevant once you get to Phase 5's rolling re-optimization, which must run fast).
+This guarantees mutual exclusivity but converts the problem from LP to MILP, requiring `intlinprog` instead of `linprog`, with materially higher solve time (relevant once you get to Stage 5's rolling re-optimization, which must run fast).
 
 **B. Unconstrained-but-checked continuous formulation (recommended for this project).** Leave $P_{ch}(k), P_{dis}(k) \ge 0$ continuous, and rely on the fact that **because both directions incur round-trip losses ($\eta_{ch}\eta_{dis} < 1$) and the objective minimizes cost**, a cost-minimizing LP solver has no incentive to simultaneously charge and discharge — doing so only wastes energy for no benefit, so the optimal solution will naturally drive at least one of the two to zero at every step in the vast majority of cases. This should then be **validated, not assumed**: after solving, check numerically that $\min(P_{ch}(k), P_{dis}(k)) \approx 0\ \forall k$ (Part 20 gives validation code). If violations appear (they occasionally can under degenerate/tied-cost conditions), only then escalate to the MILP formulation.
 
-**Recommendation:** use approach B for Phases 1–4 to keep the project inside LP/QP solvers as the meta-prompt requires, and document the validation check explicitly. Approach A is listed as an **optional implementation choice** if validation reveals persistent violations.
+**Recommendation:** use approach B for Stages 1–4 to keep the project inside LP/QP solvers as the meta-prompt requires, and document the validation check explicitly. Approach A is listed as an **optional implementation choice** if validation reveals persistent violations.
 
 ## 3.3 LP-Compatibility
 
-Both the SOC recursion and the power limits in Section 3.1–3.2(B) are linear in the decision variables $P_{ch}(k), P_{dis}(k), P_{grid,imp}(k), P_{grid,exp}(k)$, which is what permits the Phase 2 formulation to be solved with `linprog`. This linearity is preserved as long as $\eta_{ch}, \eta_{dis}$ are treated as constants (not SOC- or power-dependent) — a standard simplification for a B.Tech-level project, flagged here as a **literature-based assumption**.
+Both the SOC recursion and the power limits in Section 3.1–3.2(B) are linear in the decision variables $P_{ch}(k), P_{dis}(k), P_{grid,imp}(k), P_{grid,exp}(k)$, which is what permits the Stage 2 formulation to be solved with `linprog`. This linearity is preserved as long as $\eta_{ch}, \eta_{dis}$ are treated as constants (not SOC- or power-dependent) — a standard simplification for a B.Tech-level project, flagged here as a **literature-based assumption**.
 
 \newpage
 
@@ -284,7 +284,7 @@ This example is purely illustrative of how to *use* the equation for a manual sa
 
 \newpage
 
-# Part 5 — Rule-Based EMS (Phase 1)
+# Part 5 — Rule-Based EMS (Stage 1)
 
 ## 5.1 Priority Order
 
@@ -293,7 +293,7 @@ This example is purely illustrative of how to *use* the equation for a manual sa
 - On PV surplus: **PV → Load** first, then **PV → Battery**, then **PV → Grid (export)**.
 - On PV deficit: **Battery → Load** first (battery is "free" marginal energy already paid for), then **Grid → Load** only once $SOC_{min}$ is reached.
 
-This ordering is appropriate because it maximizes self-consumption before falling back to the grid, which is the behaviour that generates ToD arbitrage savings in the first place — it is also the behaviour Phase 2's LP is expected to *improve upon*, so Phase 1 must implement it honestly (not already partially optimized) to give a fair baseline.
+This ordering is appropriate because it maximizes self-consumption before falling back to the grid, which is the behaviour that generates ToD arbitrage savings in the first place — it is also the behaviour Stage 2's LP is expected to *improve upon*, so Stage 1 must implement it honestly (not already partially optimized) to give a fair baseline.
 
 ## 5.2 Pseudocode
 
@@ -319,7 +319,7 @@ for k = 1 to N:
 
 ```matlab
 function [P_ch, P_dis, P_grid_imp, P_grid_exp, SOC] = rule_based_ems(P_pv, P_load, params)
-% RULE_BASED_EMS  Deterministic self-consumption-first dispatch (Phase 1 baseline).
+% RULE_BASED_EMS  Deterministic self-consumption-first dispatch (Stage 1 baseline).
 %
 % Inputs:
 %   P_pv, P_load : [N x 1] kW profiles
@@ -362,7 +362,7 @@ end
 
 \newpage
 
-# Part 6 — Linear Programming EMS (Phase 2)
+# Part 6 — Linear Programming EMS (Stage 2)
 
 ## 6.1 Decision Variables
 
@@ -375,7 +375,7 @@ SOC is *not* an independent decision variable in this formulation — it is a li
 
 $$\min_x f^T x = \sum_{k=1}^{N} C_{grid}(k)\, P_{grid,imp}(k)\,\Delta T \;-\; \sum_{k=1}^N C_{exp}(k)\, P_{grid,exp}(k)\,\Delta T$$
 
-Battery degradation is deliberately **excluded** here per Phase 2's definition in `Plan.md` — this is the "naive" objective whose consequence (aggressive cycling) is quantified *after* solving, in Section 6.6, and is what motivates Phase 3.
+Battery degradation is deliberately **excluded** here per Stage 2's definition in `Plan.md` — this is the "naive" objective whose consequence (aggressive cycling) is quantified *after* solving, in Section 6.6, and is what motivates Stage 3.
 
 ## 6.3 Equality Constraints ($A_{eq}x = b_{eq}$)
 
@@ -399,7 +399,7 @@ $$0 \le P_{ch}(k) \le P_{ch,max}, \quad 0 \le P_{dis}(k) \le P_{dis,max}$$
 ```matlab
 function lp = build_lp_problem(P_pv, P_load, tariff, params)
 % BUILD_LP_PROBLEM  Constructs f, A, b, Aeq, beq, lb, ub for linprog
-% for the Phase-2 "naive" cost-minimizing EMS over an N-step horizon.
+% for the Stage-2 "naive" cost-minimizing EMS over an N-step horizon.
 %
 % tariff: struct with fields C_import [N x 1], C_export [N x 1]
 
@@ -571,11 +571,11 @@ Before your report states which metering arrangement applies to your assumed sys
 
 # Part 9 — Peak Demand Management (Optional Extension)
 
-**Project assumption:** as noted in the Source & Scope Note, `Plan.md` does not define peak-shaving as a mandatory phase. This section is included so the capability exists if you choose to extend Phase 3, but it is not on the critical path.
+**Project assumption:** as noted in the Source & Scope Note, `Plan.md` does not define peak-shaving as a mandatory stage. This section is included so the capability exists if you choose to extend Stage 3, but it is not on the critical path.
 
 ## 9.1 Energy Charge vs. Demand Charge
 
-- **Energy charge:** billed on total kWh consumed, at the ToD rate in force at each step — this is what Phases 2–3 already optimize.
+- **Energy charge:** billed on total kWh consumed, at the ToD rate in force at each step — this is what Stages 2–3 already optimize.
 - **Demand/peak charge:** billed on the single highest metered import power (kW) during a billing period, independent of how many kWh were consumed at that level. A single high-power spike can dominate a bill even if total energy is low.
 
 ## 9.2 LP-Compatible Peak Formulation
@@ -603,7 +603,7 @@ This remains linear — $P_{peak}$ is just one more decision variable appended t
 
 ## 9.3 Comparison Ladder
 
-`Plan.md`'s comparison matrix (Phase 4) is naturally extended to include peak-aware variants if implemented: PV-only → PV+rule-based → PV+cost-optimized → PV+cost+peak-optimized, each adding one more term to the objective while reusing the same constraint machinery.
+`Plan.md`'s comparison matrix (Stage 4) is naturally extended to include peak-aware variants if implemented: PV-only → PV+rule-based → PV+cost-optimized → PV+cost+peak-optimized, each adding one more term to the objective while reusing the same constraint machinery.
 
 \newpage
 
@@ -653,7 +653,7 @@ end
 | Rainflow counting | Medium–High | More rigorous for irregular cycling; good as a validation cross-check on the naive-vs-aware comparison `Plan.md` already calls for |
 | Semi-empirical electrochemical aging | High | Out of scope — flag as future work only |
 
-**Recommendation:** use a **DoD-based cycle-life stress function** as the primary degradation cost inside the optimization (needed at every LP iteration, so it must stay simple and ideally linear/quadratic), and use **rainflow counting as a post-hoc validation** of the DoD-based estimate on the resulting dispatch — this is exactly the two-stage structure `Plan.md`'s Phase 2 already specifies (`linprog` first, rainflow-based degradation analysis after).
+**Recommendation:** use a **DoD-based cycle-life stress function** as the primary degradation cost inside the optimization (needed at every LP iteration, so it must stay simple and ideally linear/quadratic), and use **rainflow counting as a post-hoc validation** of the DoD-based estimate on the resulting dispatch — this is exactly the two-stage structure `Plan.md`'s Stage 2 already specifies (`linprog` first, rainflow-based degradation analysis after).
 
 ## 11.2 Degradation Cost Formulation
 
@@ -671,7 +671,7 @@ The factor of 2 converts a half-cycle (charge or discharge alone) throughput int
 $LifeCycles(DoD)^{-1}$ is nonlinear in DoD. Two LP/QP-compatible options:
 
 - **Piecewise-linear approximation** of $1/LifeCycles(DoD)$ over a few DoD bins (e.g., 0–20%, 20–50%, 50–80%, 80–100%), each with its own slope — keeps the problem an LP with a few extra SOS2/piecewise constraints, or can be approximated with a single conservative slope for simplicity (**engineering assumption**, adequate for a first B.Tech pass).
-- **Quadratic penalty** on throughput, $C_{deg}(k) \approx \beta\,(P_{ch}(k)+P_{dis}(k))^2$, which fits directly into `quadprog` and qualitatively captures "large power swings cost disproportionately more" without needing an explicit DoD curve. This is the **recommended primary approach** for Phase 3, since it keeps solver family continuity with `quadprog`.
+- **Quadratic penalty** on throughput, $C_{deg}(k) \approx \beta\,(P_{ch}(k)+P_{dis}(k))^2$, which fits directly into `quadprog` and qualitatively captures "large power swings cost disproportionately more" without needing an explicit DoD curve. This is the **recommended primary approach** for Stage 3, since it keeps solver family continuity with `quadprog`.
 
 ## 11.4 MATLAB
 
@@ -697,7 +697,7 @@ end
 
 \newpage
 
-# Part 12 — Multi-Objective Formulation (Phase 3)
+# Part 12 — Multi-Objective Formulation (Stage 3)
 
 ## 12.1 Combined Objective
 
@@ -706,13 +706,13 @@ $$\min_x \sum_{k=1}^N \Big[ C_{grid}(k)P_{grid,imp}(k)\Delta T - C_{exp}(k)P_{gr
 
 ## 12.2 Normalization and Weighting
 
-$C_{grid}$ terms are in currency units already; $C_{deg}$ (Part 11) is also currency, so $\alpha$ is **dimensionless** here — a meaningful simplification versus the more general multi-objective case (Part 12.3) where terms may have different units. **Recommendation:** start with $\alpha = 1$ (both terms weighted equally in currency terms) and run an $\alpha$-sweep (Part 14) to show the cost/degradation trade-off curve — this sweep *is* the Phase 3 deliverable `Plan.md` asks for, not a single fixed value.
+$C_{grid}$ terms are in currency units already; $C_{deg}$ (Part 11) is also currency, so $\alpha$ is **dimensionless** here — a meaningful simplification versus the more general multi-objective case (Part 12.3) where terms may have different units. **Recommendation:** start with $\alpha = 1$ (both terms weighted equally in currency terms) and run an $\alpha$-sweep (Part 14) to show the cost/degradation trade-off curve — this sweep *is* the Stage 3 deliverable `Plan.md` asks for, not a single fixed value.
 
 ## 12.3 General Weighted-Sum Form (if peak/export terms are added)
 
 $$J = w_1 C_{energy} + w_2 C_{peak} + w_3 C_{degradation} + w_4 C_{export}$$
 
-If $C_{peak}$ (kW) and $C_{energy}$ (currency) have different units, each term must first be normalized (e.g., divide by its Phase-2 baseline value) before combining, otherwise $w_i$ absorbs unit conversion invisibly and loses physical meaning. **Recommendation for this project:** keep the objective to the two terms in Section 12.1 ($C_{grid}$, $C_{deg}$) as the primary Phase 3 deliverable; treat the 4-term form as an **optional implementation choice** only if Part 9's peak-shaving extension is also implemented.
+If $C_{peak}$ (kW) and $C_{energy}$ (currency) have different units, each term must first be normalized (e.g., divide by its Stage-2 baseline value) before combining, otherwise $w_i$ absorbs unit conversion invisibly and loses physical meaning. **Recommendation for this project:** keep the objective to the two terms in Section 12.1 ($C_{grid}$, $C_{deg}$) as the primary Stage 3 deliverable; treat the 4-term form as an **optional implementation choice** only if Part 9's peak-shaving extension is also implemented.
 
 ## 12.4 Solving with `quadprog`
 
@@ -744,7 +744,7 @@ end
 
 \newpage
 
-# Part 13 — Scenario Analysis (Phase 4)
+# Part 13 — Scenario Analysis (Stage 4)
 
 ## 13.1 Scenario Matrix
 
@@ -805,7 +805,7 @@ end
 
 \newpage
 
-# Part 15 — Model Predictive Control (Phase 5)
+# Part 15 — Model Predictive Control (Stage 5)
 
 ## 15.1 Formulation
 
@@ -816,12 +816,12 @@ end
 | State | $SOC(k)$ |
 | Inputs (decision) | $P_{ch}(k), P_{dis}(k), P_{grid,imp}(k), P_{grid,exp}(k)$ over the horizon |
 | Disturbances | Forecast $P_{pv}$, $P_{load}$ over the horizon (Part 16) |
-| Constraints | Same as Phase 2/3 LP, re-applied at each horizon window |
-| Objective | Same as Phase 2/3, evaluated over the rolling horizon |
+| Constraints | Same as Stage 2/3 LP, re-applied at each horizon window |
+| Objective | Same as Stage 2/3, evaluated over the rolling horizon |
 
 ## 15.2 Day-Ahead LP vs. Receding-Horizon MPC
 
-Phase 2's LP solves **once** for the entire day using perfect (or day-ahead-forecast) PV/load knowledge. MPC instead re-solves the **same LP structure** every $\Delta T$, using only the *first* step of each solution, then slides the horizon forward and re-forecasts — this is what allows it to correct for forecast error as better information arrives, at the cost of $N$ times more solves per day.
+Stage 2's LP solves **once** for the entire day using perfect (or day-ahead-forecast) PV/load knowledge. MPC instead re-solves the **same LP structure** every $\Delta T$, using only the *first* step of each solution, then slides the horizon forward and re-forecasts — this is what allows it to correct for forecast error as better information arrives, at the cost of $N$ times more solves per day.
 
 ## 15.3 Pseudocode
 
@@ -930,7 +930,7 @@ end
     main_simulation.m        % top-level script tying everything together
 ```
 
-Each folder maps 1:1 onto a phase or cross-cutting concern from Part 1's dependency graph, so `main_simulation.m` should simply call functions from each folder in dependency order rather than containing algorithmic logic itself — this keeps the codebase modular and each function independently testable (Part 20).
+Each folder maps 1:1 onto a stage or cross-cutting concern from Part 1's dependency graph, so `main_simulation.m` should simply call functions from each folder in dependency order rather than containing algorithmic logic itself — this keeps the codebase modular and each function independently testable (Part 20).
 
 \newpage
 
@@ -997,10 +997,10 @@ These are clearly labeled as synthetic, parametric profiles — appropriate for 
 | Component | Representation | Rationale |
 |---|---|---|
 | PV, load profiles | MATLAB workspace vectors feeding `From Workspace` blocks | No benefit to modeling PV cell physics at switching level for this project |
-| EMS logic (Phase 1) | Stateflow chart or MATLAB Function block | `Plan.md` explicitly names Stateflow as an option for the rule-based controller |
-| LP/QP optimization (Phases 2–3) | MATLAB Function block calling `linprog`/`quadprog`, or run offline in MATLAB and fed into Simulink as a lookup/import for visualization | Optimization solves are naturally offline/batch; Simulink's value here is mainly for the rule-based and closed-loop MPC demonstration, not for hosting the solver itself |
+| EMS logic (Stage 1) | Stateflow chart or MATLAB Function block | `Plan.md` explicitly names Stateflow as an option for the rule-based controller |
+| LP/QP optimization (Stages 2–3) | MATLAB Function block calling `linprog`/`quadprog`, or run offline in MATLAB and fed into Simulink as a lookup/import for visualization | Optimization solves are naturally offline/batch; Simulink's value here is mainly for the rule-based and closed-loop MPC demonstration, not for hosting the solver itself |
 | Battery, grid, power balance | Averaged power-balance blocks (gain/sum/integrator for SOC), **not** switching-level converter models | **Engineering assumption:** an averaged model is sufficient and appropriate scope for a B.Tech EMS project; switching-level modeling would shift project focus toward power electronics, which is not this project's objective |
-| Controller | MATLAB Function block wrapping `run_mpc.m` logic for a closed-loop demonstration | Lets you show the Phase 5 rolling-horizon concept inside a dynamic simulation rather than only as a MATLAB script loop |
+| Controller | MATLAB Function block wrapping `run_mpc.m` logic for a closed-loop demonstration | Lets you show the Stage 5 rolling-horizon concept inside a dynamic simulation rather than only as a MATLAB script loop |
 
 ## 19.2 ASCII Block Diagram
 
@@ -1017,7 +1017,7 @@ These are clearly labeled as synthetic, parametric profiles — appropriate for 
                           [Battery Model]
 ```
 
-**Recommendation:** treat full Simulink implementation as valuable for the rule-based (Phase 1) and MPC (Phase 5) demonstrations specifically, since these are the two phases with genuine closed-loop/dynamic character; the LP/QP-only phases (2–3) are naturally batch optimizations and can remain pure MATLAB scripts feeding results into Simulink-generated plots for consistency, if time is limited.
+**Recommendation:** treat full Simulink implementation as valuable for the rule-based (Stage 1) and MPC (Stage 5) demonstrations specifically, since these are the two stages with genuine closed-loop/dynamic character; the LP/QP-only stages (2–3) are naturally batch optimizations and can remain pure MATLAB scripts feeding results into Simulink-generated plots for consistency, if time is limited.
 
 \newpage
 
@@ -1061,22 +1061,22 @@ report.all_pass = report.balance_ok && report.soc_ok && ...
 end
 ```
 
-Run this after **every** phase's dispatch (rule-based, naive LP, degradation-aware, MPC step) as a standard sanity gate before trusting any downstream metric or plot.
+Run this after **every** stage's dispatch (rule-based, naive LP, degradation-aware, MPC step) as a standard sanity gate before trusting any downstream metric or plot.
 
 \newpage
 
 # Part 21 — Expected Results (No Fabricated Numbers)
 
-For each phase, generate the following and evaluate against the stated expectation — do not fill in numeric values until you have actually run the simulation.
+For each stage, generate the following and evaluate against the stated expectation — do not fill in numeric values until you have actually run the simulation.
 
-| Phase | Plot | Expected behaviour | Bug indicator | Meaningful improvement |
+| Stage | Plot | Expected behaviour | Bug indicator | Meaningful improvement |
 |---|---|---|---|---|
-| Phase 1 | PV, load, battery, grid power vs. time | Battery charges on PV surplus, discharges on deficit; grid only fills residual | Simultaneous charge+discharge; SOC outside bounds | N/A (baseline) |
-| Phase 2 | Dispatch + cost vs. Phase 1 | Lower total grid cost than Phase 1; battery cycles more aggressively, timed to tariff peaks | Cost *higher* than Phase 1 (solver/constraint bug); SOC violations | Cost reduction of `[INSERT VALUE]`% vs. baseline |
-| Phase 2 (post-hoc) | Degradation cost vs. Phase 1 | Naive LP shows *higher* degradation cost than Phase 1 despite lower grid cost | Degradation cost lower than Phase 1 (would contradict the phase's own hypothesis — recheck model) | N/A — this contrast is the expected finding |
-| Phase 3 | Grid cost vs. degradation cost trade-off ($\alpha$ sweep) | Monotonic-ish trade-off: as $\alpha$ increases, degradation cost falls, grid cost rises | Non-monotonic/erratic curve (solver or normalization issue) | A visible "knee" showing a good compromise $\alpha$ |
-| Phase 4 | Comparison table (all controllers) | Ordering matches `Plan.md`'s expected matrix: naive lowest grid cost/highest degradation; aware = lowest total cost | Any controller strictly dominates the LP-optimal ones on total cost (implies bug) | Clear demonstration that "optimal" ≠ "cheapest grid bill alone" |
-| Phase 5 | MPC vs. day-ahead LP | MPC slightly worse than day-ahead LP under perfect forecast (it has less foresight); gap widens with forecast error | MPC infeasible at some step; MPC *better* than perfect-information day-ahead LP (impossible — recheck) | Small, explainable gap that grows gracefully with $\sigma$ |
+| Stage 1 | PV, load, battery, grid power vs. time | Battery charges on PV surplus, discharges on deficit; grid only fills residual | Simultaneous charge+discharge; SOC outside bounds | N/A (baseline) |
+| Stage 2 | Dispatch + cost vs. Stage 1 | Lower total grid cost than Stage 1; battery cycles more aggressively, timed to tariff peaks | Cost *higher* than Stage 1 (solver/constraint bug); SOC violations | Cost reduction of `[INSERT VALUE]`% vs. baseline |
+| Stage 2 (post-hoc) | Degradation cost vs. Stage 1 | Naive LP shows *higher* degradation cost than Stage 1 despite lower grid cost | Degradation cost lower than Stage 1 (would contradict the stage's own hypothesis — recheck model) | N/A — this contrast is the expected finding |
+| Stage 3 | Grid cost vs. degradation cost trade-off ($\alpha$ sweep) | Monotonic-ish trade-off: as $\alpha$ increases, degradation cost falls, grid cost rises | Non-monotonic/erratic curve (solver or normalization issue) | A visible "knee" showing a good compromise $\alpha$ |
+| Stage 4 | Comparison table (all controllers) | Ordering matches `Plan.md`'s expected matrix: naive lowest grid cost/highest degradation; aware = lowest total cost | Any controller strictly dominates the LP-optimal ones on total cost (implies bug) | Clear demonstration that "optimal" ≠ "cheapest grid bill alone" |
+| Stage 5 | MPC vs. day-ahead LP | MPC slightly worse than day-ahead LP under perfect forecast (it has less foresight); gap widens with forecast error | MPC infeasible at some step; MPC *better* than perfect-information day-ahead LP (impossible — recheck) | Small, explainable gap that grows gracefully with $\sigma$ |
 
 \newpage
 
@@ -1114,7 +1114,7 @@ For each phase, generate the following and evaluate against the stated expectati
 
 **15. Limitations.** The degradation model used is a `[INSERT: throughput-based / DoD-based / quadratic-proxy]` approximation and does not capture calendar aging, temperature effects, or manufacturer-specific cell chemistry in detail. The metering arrangement assumed (Section 8) has not been independently verified against current AERC/APDCL regulation. PV and load data are `[INSERT: real / synthetic]` and results should be interpreted accordingly.
 
-**16. Future work.** Rainflow-based degradation validation at full resolution; incorporation of temperature-dependent aging; real smart-meter data acquisition; metaheuristic (PSO/GA) comparison against the QP-based Phase 3 solution as an alternative solver benchmark; full hardware-in-the-loop or physical prototype validation.
+**16. Future work.** Rainflow-based degradation validation at full resolution; incorporation of temperature-dependent aging; real smart-meter data acquisition; metaheuristic (PSO/GA) comparison against the QP-based Stage 3 solution as an alternative solver benchmark; full hardware-in-the-loop or physical prototype validation.
 
 **17. Conclusion.** [INSERT: summary of the cost/degradation trade-off finding once simulated, referencing the $\alpha$-sweep of Section 10].
 
@@ -1127,15 +1127,15 @@ For each phase, generate the following and evaluate against the stated expectati
 | 1 | System architecture | Block diagram of PV/battery/grid/load/EMS | Orients the reader before any math | (manual/drawn) |
 | 2 | PV & load profile | Input profiles used | Establishes the scenario being solved | `plot_results.m` |
 | 3 | Rule-based dispatch | $P_{pv}, P_{load}, P_{batt}, P_{grid}$ vs. time | Baseline behaviour | `plot_results.m` |
-| 4 | LP (naive) dispatch | Same, Phase 2 | Shows cost-driven cycling pattern | `plot_results.m` |
+| 4 | LP (naive) dispatch | Same, Stage 2 | Shows cost-driven cycling pattern | `plot_results.m` |
 | 5 | SOC comparison | SOC(k) across controllers | Visualizes cycling depth/frequency differences | `plot_results.m` |
 | 6 | Grid power comparison | $P_{grid,imp/exp}$ across controllers | Shows arbitrage behaviour | `plot_results.m` |
 | 7 | Tariff profile | $C_{import}(k)$, $C_{export}(k)$ | Context for dispatch timing | `calculate_tariff.m` output |
 | 8 | Peak shaving *(if implemented)* | $P_{grid,imp}$ with/without peak cap | Demand-charge effect | `plot_results.m` |
 | 9 | PV utilization | Self-consumption/curtailment breakdown | Quantifies PV value capture | `calculate_metrics.m` output |
-| 10 | Degradation cost trade-off | Grid cost vs. degradation cost, $\alpha$-swept | Core Phase 3 finding | `run_sensitivity_sweep.m` |
+| 10 | Degradation cost trade-off | Grid cost vs. degradation cost, $\alpha$-swept | Core Stage 3 finding | `run_sensitivity_sweep.m` |
 | 11 | Sensitivity: battery capacity vs. savings | Line plot | Justifies sizing discussion | `run_sensitivity_sweep.m` |
-| 12 | MPC vs. day-ahead LP | Dispatch + cost comparison | Validates Phase 5 | `run_mpc.m` output |
+| 12 | MPC vs. day-ahead LP | Dispatch + cost comparison | Validates Stage 5 | `run_mpc.m` output |
 | 13 | Forecast error comparison | Cost/peak/SOC vs. $\sigma$ | Quantifies robustness | `forecast_with_error.m` sweep |
 
 \newpage
@@ -1147,10 +1147,10 @@ For each phase, generate the following and evaluate against the stated expectati
 **Likely questions and answers:**
 
 1. *Why is a battery needed at all, given the grid connection?* — It enables ToD arbitrage (shift consumption away from peak-price hours) and improves self-consumption of PV that would otherwise be exported at a lower credit rate than the avoided import cost.
-2. *What is a Time-of-Day tariff and why does it matter here?* — A tariff structure where the import price varies by hour of day; it is what creates the economic incentive for the battery to time-shift energy, which the LP in Phase 2 exploits.
+2. *What is a Time-of-Day tariff and why does it matter here?* — A tariff structure where the import price varies by hour of day; it is what creates the economic incentive for the battery to time-shift energy, which the LP in Stage 2 exploits.
 3. *What's the difference between net metering and EXIM metering?* — See Part 8: net metering bills only the net of import/export; EXIM meters/bills import and export separately, relevant once a battery can obscure the source of exported energy.
 4. *Why does the naive LP degrade the battery faster than the rule-based baseline?* — Because it is not penalized for cycling frequency/depth at all — any arbitrage opportunity, however small, is exploited, including shallow cycles chasing minor price differences that a degradation-aware objective would judge not worth the wear.
-5. *Why LP for Phase 2 and QP (or piecewise-LP) for Phase 3?* — The grid-cost objective and constraint set are linear; the recommended quadratic degradation proxy (Part 11.3) requires a quadratic solver, so `quadprog` is the natural progression while remaining in the convex-optimization family (as opposed to jumping to non-convex metaheuristics).
+5. *Why LP for Stage 2 and QP (or piecewise-LP) for Stage 3?* — The grid-cost objective and constraint set are linear; the recommended quadratic degradation proxy (Part 11.3) requires a quadratic solver, so `quadprog` is the natural progression while remaining in the convex-optimization family (as opposed to jumping to non-convex metaheuristics).
 6. *What does $\alpha$ control, and how did you choose it?* — It weights degradation cost against grid cost in the combined objective; rather than a single fixed value, an $\alpha$-sweep is used to show the trade-off curve and justify a chosen operating point.
 7. *How do you know the battery isn't charging and discharging at the same time?* — Explicit post-solve validation (Part 3.2, Part 20) checks $\min(P_{ch}(k), P_{dis}(k)) \approx 0$ at every step; round-trip losses make simultaneous cycling suboptimal for a cost-minimizing solver in the first place.
 8. *Why MPC instead of just solving the day-ahead LP once?* — Day-ahead LP assumes perfect knowledge of the full day's PV/load in advance; MPC instead re-optimizes on a rolling basis using only near-term forecasts, which is more realistic and allows the controller to correct for forecast error as the day progresses.
@@ -1171,7 +1171,7 @@ For each phase, generate the following and evaluate against the stated expectati
 **Realistic ways to build a defensible small contribution within this project:**
 
 - Explicit **cost-vs-degradation trade-off quantification** via the $\alpha$-sweep (Section 12), presented as a decision-support curve rather than a single answer — this framing itself is a useful, presentable contribution even though the underlying LP/QP methods are standard.
-- **Naive-vs-aware comparison as an explicit demonstrated finding** (Phase 2 → Phase 3 narrative from `Plan.md`) — showing *quantitatively* that cost-only optimization is a false economy for battery life is a concrete, defensible result rather than a restatement of known theory.
+- **Naive-vs-aware comparison as an explicit demonstrated finding** (Stage 2 → Stage 3 narrative from `Plan.md`) — showing *quantitatively* that cost-only optimization is a false economy for battery life is a concrete, defensible result rather than a restatement of known theory.
 - Application to an **Assam/APDCL tariff and regional PV/load context**, if you obtain or credibly approximate regional data — regional grounding is a legitimate (if modest) contribution axis.
 - **Forecast-uncertainty robustness evaluation** (Part 16) of the degradation-aware MPC specifically, rather than only the cost-only case — extending the naive-vs-aware comparison into the MPC setting is a natural, still-modest extension beyond a pure day-ahead study.
 - An **integrated EMS framework** spanning baseline → LP → degradation-aware → MPC → dashboard in one coherent, validated codebase is itself a nontrivial engineering deliverable for a final-year project, independent of any single technique's novelty.
@@ -1194,7 +1194,7 @@ Do not claim algorithmic novelty in the report; claim **implementation rigor, ex
 | 10–11 | MPC formulation + forecast error study (Parts 15, 16) | **SHOULD HAVE** |
 | 12 | Peak-shaving extension (Part 9) | **OPTIONAL** |
 | 13 | Simulink cross-check for rule-based/MPC (Part 19) | **OPTIONAL** |
-| 14 | MATLAB App Designer dashboard (Phase 6) | **OPTIONAL** |
+| 14 | MATLAB App Designer dashboard (Stage 6) | **OPTIONAL** |
 | 15 | Report writing, figures, viva prep | **MUST HAVE** |
 
 **If time becomes limited, drop in this order (last listed = drop first):** Dashboard → Simulink cross-check → Peak-shaving extension → Forecast-error study depth (keep at least one moderate-error MPC run) → Sensitivity sweep breadth (keep at least battery-capacity and tariff-spread sweeps) → full MPC implementation (fall back to reporting day-ahead LP only, with MPC described as future work). **Never drop:** the rule-based baseline, the naive-LP-vs-degradation-aware comparison, and validation — these three are the project's core evidentiary chain and the whole narrative depends on them.
@@ -1204,14 +1204,14 @@ Do not claim algorithmic novelty in the report; claim **implementation rigor, ex
 # Immediate Next Steps
 
 1. Set up the folder structure from Part 17 and commit `system_params.m` with your actual (not placeholder) numeric parameters.
-2. Decide real-vs-synthetic data now (Part 18) — do not let this decision linger, since every downstream phase depends on it.
+2. Decide real-vs-synthetic data now (Part 18) — do not let this decision linger, since every downstream stage depends on it.
 3. Implement `generate_pv_profile.m` / `generate_load_profile.m` and visually sanity-check the profiles before writing any EMS logic.
 4. Implement and validate `rule_based_ems.m` against `validate_power_balance.m` — this is your first working, checkable milestone.
 5. Implement `calculate_tariff.m` and construct a specific ToD tariff instance for your baseline scenario (flag its regulatory status per Part 8).
 6. Implement `build_lp_problem.m` / `run_lp_ems.m` and confirm `linprog` converges (`exitflag == 1`) before trusting any output.
-7. Run the Phase 2 vs. Phase 1 comparison and compute the post-hoc degradation cost (Part 11) — this is the result that motivates the rest of the project.
+7. Run the Stage 2 vs. Stage 1 comparison and compute the post-hoc degradation cost (Part 11) — this is the result that motivates the rest of the project.
 8. Implement the degradation-aware `quadprog` formulation (Part 12) and run the $\alpha$-sweep.
-9. Populate the Part 4/Phase-4 comparison table with real numbers from steps 4–8.
+9. Populate the Part 4/Stage-4 comparison table with real numbers from steps 4–8.
 10. Only after steps 1–9 are solid, move to MPC (Part 15) — do not start MPC before the day-ahead LP is fully validated, since MPC reuses and depends on that code.
 
 \newpage

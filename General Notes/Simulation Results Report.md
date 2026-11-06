@@ -10,7 +10,7 @@ tags:
 status: verified
 related:
   - "[[System Parameters & Tariff]]"
-  - "[[Run All Phases Comparison]]"
+  - "[[Run All Stages Comparison]]"
   - "[[Cloudy vs Sunny Comparison]]"
   - "[[Evidence]]"
 ---
@@ -18,7 +18,7 @@ related:
 # Simulation Results Report
 
 > [!info] Provenance
-> Every figure in this note is direct output from `run_all_phases()` and
+> Every figure in this note is direct output from `run_all_stages()` and
 > `prepare_cloudy_comparison()` on branch `real-simulation`.
 > Nothing is hand-entered, scaled, or substituted after the run. MATLAB
 > R2024b, `N = 96` timesteps at `dt = 0.25 h`.
@@ -27,7 +27,7 @@ related:
 > charge only — the basis used by most published EMS comparisons.
 > *Total cost* adds post-hoc battery degradation at Rs 32.50 per
 > equivalent full cycle (80%-DoD, 5000-cycle model). The same model is used
-> for every phase, so the rows are directly comparable. The distinction
+> for every stage, so the rows are directly comparable. The distinction
 > matters: see §1 and §4.
 
 ---
@@ -40,7 +40,7 @@ picture changes, and that change is the most interesting result here.
 
 ### Grid cost (electricity charge only — the published-comparison basis)
 
-| Phase | Controller | Grid/day | Total/month | EFC |
+| Stage | Controller | Grid/day | Total/month | EFC |
 |-------|-----------|----------|-------------|-----|
 | 0 | Baseline (no battery) | Rs 50.54 | Rs 1516.10 | 0.000 |
 | 1 | Heuristic (greedy) | Rs 28.97 | Rs 869.19 | 0.801 |
@@ -48,7 +48,7 @@ picture changes, and that change is the most interesting result here.
 
 ### Total cost (including battery degradation)
 
-| Phase | Grid/day | Degradation/day | Total/day | Total/month |
+| Stage | Grid/day | Degradation/day | Total/day | Total/month |
 |-------|----------|-----------------|-----------|-------------|
 | 0 | Rs 50.54 | Rs 0.00 | **Rs 50.54** | Rs 1516.10 |
 | 1 | Rs 28.97 | Rs 26.03 | **Rs 55.01** | Rs 1650.21 |
@@ -70,9 +70,9 @@ picture changes, and that change is the most interesting result here.
 > Rs 26.03/day in wear, so its **total is Rs 0.18/day above the no-battery
 > baseline** (Rs 50.72 vs Rs 50.54). The heuristic is clearly worse
 > (Rs 55.01). Only the degradation-aware controller in
-> [[Phase 3 Results]] beats doing nothing (Rs 48.97/day).
+> [[Stage 3 Results]] beats doing nothing (Rs 48.97/day).
 
-All three phases pass power-balance and operating-limit validation with
+All three stages pass power-balance and operating-limit validation with
 max residual `4.441e-16 kW` against a `1e-6 kW` tolerance.
 
 ---
@@ -80,13 +80,13 @@ max residual `4.441e-16 kW` against a `1e-6 kW` tolerance.
 ## 2. The Central Finding
 
 > [!success] The optimiser's advantage is timing, not energy
-> Phase 1 and Phase 2 move **identical energy** — 5.433 kWh imported,
+> Stage 1 and Stage 2 move **identical energy** — 5.433 kWh imported,
 > 2.909 kWh exported, EFC 0.801 each — yet the LP costs Rs 4.29 less per
 > day. The gain is entirely in *when* energy is bought, not *how much*.
 
 The two controllers differ in **where** that identical 5.433 kWh lands:
 
-| Import window | Rate | Phase 1 (Heuristic) | Phase 2 (LP) | Change |
+| Import window | Rate | Stage 1 (Heuristic) | Stage 2 (LP) | Change |
 |---------------|------|----------------------|--------------|--------|
 | Normal (22–09) | Rs 6.75 | 4.245 kWh | 3.445 kWh | −0.800 |
 | Solar (09–17) | Rs 5.40 | 0.000 kWh | 1.988 kWh | +1.988 |
@@ -110,7 +110,7 @@ The **grid-cost** saving (Rs 4.29) is fully explainable by the timing shift:
 
 Full bill reconstruction (both verified against `calculate_costs`):
 
-| | Phase 1 | Phase 2 |
+| | Stage 1 | Stage 2 |
 |---|---------|---------|
 | Gross energy cost | Rs 38.2773 | Rs 33.9901 |
 | Export credit (2.909 kWh × Rs 4.00) | − Rs 11.6377 | − Rs 11.6377 |
@@ -181,7 +181,7 @@ its full 1.36 kW and imports **nothing**.
 empty and must buy 0.87 kWh at whatever price the clock says. The LP
 still holds 28% charge, worth about 2.8 kWh.
 
-This is the whole Phase 1 vs Phase 2 argument in six rows: the greedy
+This is the whole Stage 1 vs Stage 2 argument in six rows: the greedy
 controller spends its battery on the first deficit it sees, while the
 optimiser reserves it for the most expensive deficit it knows is coming.
 
@@ -222,9 +222,9 @@ more.
 
 This is why the degradation model matters. The naive LP is over-cycling to
 chase marginal savings that battery wear consumes. The degradation-aware
-Phase 3 controller trims that marginal cycling (EFC 0.765 → 0.441) and lands
-well below this Phase 2 result (Rs 86.13 vs Rs 91.22/day). See
-[[Phase 3 Results]].
+Stage 3 controller trims that marginal cycling (EFC 0.765 → 0.441) and lands
+well below this Stage 2 result (Rs 86.13 vs Rs 91.22/day). See
+[[Stage 3 Results]].
 
 ### The capability the heuristic lacks
 
@@ -298,22 +298,22 @@ Fixed charge Rs 70/month (pro-rated Rs 2.33/day).
   and the project notes said 1.80; both were wrong.
 - `Cost_replacement` **150,000 → 130,000** Rs, matching project notes.
 
-**Fairness fix:** Phase 1 previously reported `degradation_cost = 0`
-despite cycling the battery heavily. Charging it only to Phase 2 — the
-phase that *benefits* from the omission — overstated the LP's advantage.
-Both battery phases now report post-hoc degradation.
+**Fairness fix:** Stage 1 previously reported `degradation_cost = 0`
+despite cycling the battery heavily. Charging it only to Stage 2 — the
+stage that *benefits* from the omission — overstated the LP's advantage.
+Both battery stages now report post-hoc degradation.
 
 ### Verification performed
 
 | Check | Result |
 |-------|--------|
-| Power balance, all phases | Max residual 4.441e-16 kW (tol 1e-6) |
-| SOC bounds, all phases | Within [0.10, 0.90] |
+| Power balance, all stages | Max residual 4.441e-16 kW (tol 1e-6) |
+| SOC bounds, all stages | Within [0.10, 0.90] |
 | Grid and battery power limits | All within bounds |
 | Simultaneous charge/discharge | None |
-| Phase 2 grid cost cross-check | `lp_naive_ems` vs `calculate_costs` — equal |
-| Phase 2 degradation cross-check | `lp_naive_ems` vs `battery_degradation` — equal |
-| Shared degradation model | Phase 1/2/3 all use `battery_degradation.m` |
+| Stage 2 grid cost cross-check | `lp_naive_ems` vs `calculate_costs` — equal |
+| Stage 2 degradation cross-check | `lp_naive_ems` vs `battery_degradation` — equal |
+| Shared degradation model | Stage 1/2/3 all use `battery_degradation.m` |
 | Bill reconstruction | Recomputed independently, matches to 4 decimals |
 | Cost decomposition | Rs 4.29 predicted saving vs Rs 4.29 observed |
 | MATLAB warnings | None |
@@ -342,9 +342,9 @@ Carried forward from [[System Parameters & Tariff]]:
 
 ## 8. Next Steps
 
-1. **Degradation-aware LP (Phase 3).** Implemented. On the cloudy day it
+1. **Degradation-aware LP (Stage 3).** Implemented. On the cloudy day it
    trims EFC from 0.765 to 0.441 and lands Rs 5.09/day below the naive LP
-   (Rs 86.13 vs Rs 91.22). See [[Phase 3 Results]].
+   (Rs 86.13 vs Rs 91.22). See [[Stage 3 Results]].
 2. **Multi-day horizon.** Required to exercise the 300/500 kWh slabs and
    to make monthly figures simulated rather than extrapolated.
 3. **Measured or TMY-driven profiles** to replace the parametric curves.
@@ -357,7 +357,7 @@ Carried forward from [[System Parameters & Tariff]]:
 ## Related
 
 - [[System Parameters & Tariff]] — parameter and tariff reference
-- [[Run All Phases Comparison]] — sunny-day phase comparison
+- [[Run All Stages Comparison]] — sunny-day stage comparison
 - [[Cloudy vs Sunny Comparison]] — weather sensitivity
 - [[Evidence]] — APDCL source documents
 - [[Objectives and Benefits]] — value proposition

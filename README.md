@@ -5,7 +5,7 @@ This project models an algorithmic Energy Management System (EMS) designed to pe
 
 ---
 
-## Phase 1: Baseline Heuristic Model (State-Machine Logic)
+## Stage 1: Baseline Heuristic Model (State-Machine Logic)
 **Objective:** Establish a baseline operational model using deterministic, rule-based logic without mathematical optimization.
 
 ### Key Mechanics
@@ -15,7 +15,7 @@ This project models an algorithmic Energy Management System (EMS) designed to pe
 
 ---
 
-## Phase 2: Cost Optimization Without Battery Cycling Constraints
+## Stage 2: Cost Optimization Without Battery Cycling Constraints
 **Objective:** Minimize total grid energy cost under dynamic ToD tariffs assuming zero battery degradation cost.
 
 ### Mathematical Formulation
@@ -38,9 +38,9 @@ To prove that this naive optimization degrades battery health rapidly:
 
 ---
 
-## Phase 3: Cost Optimization With Battery Cycling & Degradation Constraints
-**Status: implemented and verified.** Code lives in `Matlab/Phase3/`; measured
-results are in `General Notes/Phase 3 Results.md`.
+## Stage 3: Cost Optimization With Battery Cycling & Degradation Constraints
+**Status: implemented and verified.** Code lives in `Matlab/Stage3/`; measured
+results are in `General Notes/Stage 3 Results.md`.
 
 **Objective:** Formulate a multi-objective optimization problem that balances ToD tariff grid savings against battery replacement costs.
 
@@ -58,25 +58,25 @@ $$\min_{x} \sum_{k=1}^{N} \left[ \underbrace{C_{\text{grid}}(k) \cdot P_{\text{g
 ### Optimization Method
 * Solved as a **linear program** (`linprog` in MATLAB). The wear term is linear
   in throughput, so the problem stays convex and globally optimal.
-* Every phase uses the same DoD-aware model (`Matlab/battery_degradation.m`).
-  Phase 2 stays degradation-unaware in its objective but its wear is priced
-  with the shared model, so all phase totals are directly comparable.
+* Every stage uses the same DoD-aware model (`Matlab/battery_degradation.m`).
+  Stage 2 stays degradation-unaware in its objective but its wear is priced
+  with the shared model, so all stage totals are directly comparable.
 
 ### Measured Result (sunny day, $\alpha=1$)
-| Quantity | Phase 3 |
+| Quantity | Stage 3 |
 |---|---:|
 | Grid cost | Rs 26.88/day |
 | Degradation | Rs 22.10/day |
 | **Total** | **Rs 48.97/day** |
 | EFC | 0.680 |
 
-The Phase 2 dispatch costs Rs 50.72/day under the same model, so Phase 3
+The Stage 2 dispatch costs Rs 50.72/day under the same model, so Stage 3
 saves Rs 1.75/day by trimming marginal cycling and lands below the
 Rs 50.54/day no-battery baseline. The alpha sweep knee is $\alpha=1.25$.
 
 ---
 
-## Phase 4: Comparative Benchmarking & Sensitivity Analysis
+## Stage 4: Comparative Benchmarking & Sensitivity Analysis
 **Objective:** Compare performance across all controllers under standard operational scenarios.
 
 ### Comparison Metrics Matrix
@@ -84,9 +84,9 @@ Rs 50.54/day no-battery baseline. The alpha sweep knee is $\alpha=1.25$.
 | Controller / Scenario | Grid Cost ($) | Degradation Cost ($) | Total Operational Cost ($) | Battery State of Health Loss (%) | Execution Time (s) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **No Storage Baseline** | -- | $0 | -- | 0.0% | N/A |
-| **Heuristic (Phase 1)** | -- | -- | -- | Moderate | < 0.1 |
-| **Naive Optimization (Phase 2)** | Lowest | Highest | High (Long-term) | Highest | Fast |
-| **Degradation-Aware EMS (Phase 3)** | Balanced | Lowest | **Optimal** | Lowest | Moderate |
+| **Heuristic (Stage 1)** | -- | -- | -- | Moderate | < 0.1 |
+| **Naive Optimization (Stage 2)** | Lowest | Highest | High (Long-term) | Highest | Fast |
+| **Degradation-Aware EMS (Stage 3)** | Balanced | Lowest | **Optimal** | Lowest | Moderate |
 
 ### Scenario Testing
 * **Clear vs. Cloudy Day:** Evaluate stability under sharp solar irradiance fluctuations.
@@ -94,7 +94,7 @@ Rs 50.54/day no-battery baseline. The alpha sweep knee is $\alpha=1.25$.
 
 ---
 
-## Phase 5: Model Predictive Control (MPC) & Real-Data Validation
+## Stage 5: Model Predictive Control (MPC) & Real-Data Validation
 **Objective:** Transition from offline full-day optimization to real-time rolling-horizon decision-making.
 
 * **Rolling Horizon Execution:** Re-optimize over a 24-hour prediction horizon at every 15-minute time step using short-term load and solar forecasts.
@@ -102,7 +102,7 @@ Rs 50.54/day no-battery baseline. The alpha sweep knee is $\alpha=1.25$.
 
 ---
 
-## Phase 6: MATLAB App Designer Dashboard
+## Stage 6: MATLAB App Designer Dashboard
 **Objective:** Build an interactive GUI for final presentation and live demonstration.
 
 * **Interactive Controls:** Sliders for battery capacity, solar array sizing, replacement costs, and ToD price multipliers.

@@ -3,23 +3,23 @@ id: T-001
 title: Add DoD-aware degradation model
 status: done
 depends_on: []
-phase: 3
+stage: 3
 ---
 
 # T-001 — Add DoD-aware degradation model
 
 ## Goal
 
-Add a Phase 3 degradation model that prices battery wear at the design depth of
-discharge and the rated cycle life, without touching the Phase 2 model or
+Add a Stage 3 degradation model that prices battery wear at the design depth of
+discharge and the rated cycle life, without touching the Stage 2 model or
 results.
 
 ## Files
 
 - `Matlab/system_params.m` (additive fields only)
-- `Matlab/Phase3/battery_degradation_dod.m` (new)
+- `Matlab/Stage3/battery_degradation_dod.m` (new)
 
-Do **not** modify `Matlab/Phase2/battery_degradation.m`.
+Do **not** modify `Matlab/Stage2/battery_degradation.m`.
 
 ## Model
 
@@ -48,16 +48,16 @@ function [deg_cost, EFC, DoD, LifeCycles] = ...
 - `params.DoD_rated` is derived from `SOC_max - SOC_min`, not hard-coded.
 - `params.N_cycles_rated = 5000`.
 - Legacy `params.A_cycle = 5000` and `params.b_cycle = 1.3` stay in
-  `system_params.m` because Phase 2 still reads them.
+  `system_params.m` because Stage 2 still reads them.
 
 ## Tasks
 
 - Add `DoD_rated` and `N_cycles_rated` to `system_params.m` without removing
   the legacy fields.
 - Implement `battery_degradation_dod.m` with a function header matching the
-  existing Phase 2 style.
+  existing Stage 2 style.
 - Document that the per-timestep DoD is a 15-minute slice, not a full cycle.
-- Document that Phase 2 remains on the legacy model.
+- Document that Stage 2 remains on the legacy model.
 
 ## Acceptance criteria
 
@@ -86,4 +86,4 @@ assert(abs(EFC - 5/20) < 1e-12);
 ## Completion
 
 - Commit: pending
-- Notes: Implemented and verified with `verify_phase3` (OVERALL PASS).
+- Notes: Implemented and verified with `verify_stage3` (OVERALL PASS).

@@ -10,7 +10,7 @@ tags:
   - PV
 related:
   - "[[README]]"
-  - "[[Run All Phases Comparison]]"
+  - "[[Run All Stages Comparison]]"
   - "[[Cloudy vs Sunny Comparison]]"
 ---
 
@@ -47,7 +47,7 @@ related:
 | Charge efficiency | $\eta_{ch}$ | 0.95 | — |
 | Discharge efficiency | $\eta_{dis}$ | 0.95 | — |
 
-### Battery Degradation (all phases, shared model)
+### Battery Degradation (all stages, shared model)
 
 | Parameter | Symbol | Value | Unit |
 |-----------|--------|-------|------|
@@ -59,9 +59,9 @@ related:
 | Cost per rated 80%-DoD cycle | | 26.00 | Rs |
 | Cost per equivalent full cycle | | 32.50 | Rs |
 
-The same `Matlab/battery_degradation.m` model prices every phase. Phase 1 and
-Phase 2 remain degradation-unaware in their controllers; their wear is
-reported post-hoc. Phase 3 puts the same wear term inside its LP objective.
+The same `Matlab/battery_degradation.m` model prices every stage. Stage 1 and
+Stage 2 remain degradation-unaware in their controllers; their wear is
+reported post-hoc. Stage 3 puts the same wear term inside its LP objective.
 The per-timestep DoD and `LifeCycles` curve are diagnostics only.
 
 ### Validation
@@ -178,7 +178,7 @@ than hidden. None of them are bugs.
 
 3. **Fixed charge is pro-rated.** Rs 70/month ÷ 30 approximates a daily
    share. It is a small, flat term and does not affect the comparison
-   between phases.
+   between stages.
 
 4. **`net_metering` branch is dead code.** `tariff.net_metering` is
    `false`, so the net-metering path in `calculate_costs.m` never runs. It
@@ -202,7 +202,7 @@ than hidden. None of them are bugs.
 
 - [[README]] — full project architecture
 - [[Simulation Results Report]] — verified results with hourly dispatch data
-- [[Run All Phases Comparison]] — how these parameters drive the all-phase comparison
+- [[Run All Stages Comparison]] — how these parameters drive the all-stage comparison
 - [[Cloudy vs Sunny Comparison]] — how PV profile changes affect results
 - [[Evidence]] — APDCL tariff source documents
 - [[Objectives and Benefits]] — value proposition

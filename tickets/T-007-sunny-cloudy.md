@@ -1,12 +1,12 @@
 ---
 id: T-007
-title: Extend sunny/cloudy comparison to Phase 3
+title: Extend sunny/cloudy comparison to Stage 3
 status: done
 depends_on: [T-004]
-phase: 3
+stage: 3
 ---
 
-# T-007 — Extend sunny/cloudy comparison to Phase 3
+# T-007 — Extend sunny/cloudy comparison to Stage 3
 
 ## Goal
 
@@ -22,8 +22,8 @@ comparison so all four controllers are evaluated on both PV profiles.
 
 ### `prepare_cloudy_comparison`
 
-- Add `phase3` to `energy_summary` using the same fields as the other phases.
-- Add Phase 3 to `print_costs` and `print_energy`.
+- Add `stage3` to `energy_summary` using the same fields as the other stages.
+- Add Stage 3 to `print_costs` and `print_energy`.
 - Store the alpha used on the result struct for provenance.
 
 ### `plot_comparison`
@@ -33,21 +33,21 @@ comparison so all four controllers are evaluated on both PV profiles.
 - Daily details: four panels per scenario instead of three.
 - Adjust figure height/position so four panels remain readable.
 - Keep the existing colours and legend conventions.
-- Label that Phase 2 uses the legacy degradation model and Phase 3 uses the
+- Label that Stage 2 uses the legacy degradation model and Stage 3 uses the
   DoD-aware model, so the degradation series are not read as directly
   comparable.
 
-`plot_ems_comparison.m` is already phase-agnostic; reuse it rather than
+`plot_ems_comparison.m` is already stage-agnostic; reuse it rather than
 duplicating its logic.
 
 ## Acceptance criteria
 
 - [ ] `run_comparison` completes for both sunny and cloudy.
-- [ ] Both scenarios contain `phase3`.
-- [ ] Cost bars show four phases for daily, monthly, and grid cost.
+- [ ] Both scenarios contain `stage3`.
+- [ ] Cost bars show four stages for daily, monthly, and grid cost.
 - [ ] Daily-detail figures show four panels and correct titles.
-- [ ] Phase 3 validation passes in both scenarios.
-- [ ] No existing phase is dropped from the output.
+- [ ] Stage 3 validation passes in both scenarios.
+- [ ] No existing stage is dropped from the output.
 
 ## Verification
 
@@ -55,11 +55,11 @@ duplicating its logic.
 cd Matlab
 startup
 results = run_comparison();
-results.sunny.phase3.validation.all_checks_passed
-results.cloudy.phase3.validation.all_checks_passed
+results.sunny.stage3.validation.all_checks_passed
+results.cloudy.stage3.validation.all_checks_passed
 ```
 
 ## Completion
 
 - Commit: pending
-- Notes: Implemented and verified with `verify_phase3` (OVERALL PASS).
+- Notes: Implemented and verified with `verify_stage3` (OVERALL PASS).

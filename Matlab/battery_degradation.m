@@ -1,10 +1,10 @@
 function [deg_cost, EFC, DoD, LifeCycles] = battery_degradation(P_ch, P_dis, params)
-%BATTERY_DEGRADATION Unified battery degradation cost used by every phase.
+%BATTERY_DEGRADATION Unified battery degradation cost used by every stage.
 %
 %   [deg_cost, EFC, DoD, LifeCycles] = BATTERY_DEGRADATION(P_ch, P_dis, params)
 %   prices battery wear from energy throughput using the rated cycle life at
 %   the usable depth of discharge. This is the single degradation model for
-%   Phase 1, Phase 2, and Phase 3, so their reported wear costs are directly
+%   Stage 1, Stage 2, and Stage 3, so their reported wear costs are directly
 %   comparable.
 %
 %   Rated-cycle model:
@@ -21,9 +21,9 @@ function [deg_cost, EFC, DoD, LifeCycles] = battery_degradation(P_ch, P_dis, par
 %
 %   This is a linear throughput cost: the optimiser never sees a
 %   per-timestep DoD. The rated DoD only sets the energy moved by one rated
-%   cycle. Phase 2 remains a degradation-unaware controller (its LP
+%   cycle. Stage 2 remains a degradation-unaware controller (its LP
 %   objective is grid cost only); this function prices its wear after the
-%   fact so all phases can be compared on the same basis. Phase 3 feeds the
+%   fact so all stages can be compared on the same basis. Stage 3 feeds the
 %   same c_deg into its LP objective.
 %
 %   Diagnostics:

@@ -3,10 +3,10 @@ function results = prepare_cloudy_comparison()
 
     matlab_dir = fileparts(fileparts(mfilename('fullpath')));
     addpath(matlab_dir, ...
-        fullfile(matlab_dir, 'Phase0'), ...
-        fullfile(matlab_dir, 'Phase1'), ...
-        fullfile(matlab_dir, 'Phase2'), ...
-        fullfile(matlab_dir, 'Phase3'));
+        fullfile(matlab_dir, 'Stage0'), ...
+        fullfile(matlab_dir, 'Stage1'), ...
+        fullfile(matlab_dir, 'Stage2'), ...
+        fullfile(matlab_dir, 'Stage3'));
 
     params = system_params();
     cloudy_params = params;
@@ -53,13 +53,13 @@ end
 function summary = energy_summary(result, dt)
 %ENERGY_SUMMARY Daily consumed, imported, and exported energy per case.
     summary.baseline = energy_from_profiles( ...
-        result.P_load, result.phase0.P_gimp, result.phase0.P_gexp, dt);
+        result.P_load, result.stage0.P_gimp, result.stage0.P_gexp, dt);
     summary.heuristic = energy_from_profiles( ...
-        result.P_load, result.phase1.P_gimp, result.phase1.P_gexp, dt);
+        result.P_load, result.stage1.P_gimp, result.stage1.P_gexp, dt);
     summary.lp = energy_from_profiles( ...
-        result.P_load, result.phase2.P_gimp, result.phase2.P_gexp, dt);
+        result.P_load, result.stage2.P_gimp, result.stage2.P_gexp, dt);
     summary.lp_aware = energy_from_profiles( ...
-        result.P_load, result.phase3.P_gimp, result.phase3.P_gexp, dt);
+        result.P_load, result.stage3.P_gimp, result.stage3.P_gexp, dt);
 end
 
 function energy = energy_from_profiles(P_load, P_gimp, P_gexp, dt)
@@ -70,10 +70,10 @@ end
 
 function print_costs(name, result)
     fprintf('\n%s\n', name);
-    fprintf('Baseline:   Rs%.2f/day\n', result.phase0.total_cost);
-    fprintf('Heuristic:  Rs%.2f/day\n', result.phase1.total_cost);
-    fprintf('LP naive:   Rs%.2f/day\n', result.phase2.total_cost);
-    fprintf('LP aware:   Rs%.2f/day\n', result.phase3.total_cost);
+    fprintf('Baseline:   Rs%.2f/day\n', result.stage0.total_cost);
+    fprintf('Heuristic:  Rs%.2f/day\n', result.stage1.total_cost);
+    fprintf('LP naive:   Rs%.2f/day\n', result.stage2.total_cost);
+    fprintf('LP aware:   Rs%.2f/day\n', result.stage3.total_cost);
 end
 
 function print_energy(name, energy)

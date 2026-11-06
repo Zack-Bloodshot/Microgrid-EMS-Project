@@ -3,10 +3,10 @@ function plot_comparison(sunny, cloudy)
 %
 %   plot_comparison(sunny, cloudy) creates:
 %     1. Cost comparison figure (daily, monthly, grid costs)
-%     2. Daily dispatch detail figures (PV, load, grid, battery for all phases)
+%     2. Daily dispatch detail figures (PV, load, grid, battery for all stages)
 %
 %   This is the single entry point for all comparison plotting.
-%   For per-phase EMS comparison plots, see plot_ems_comparison.m.
+%   For per-stage EMS comparison plots, see plot_ems_comparison.m.
 
     plot_cost_bars(sunny, cloudy);
     plot_daily_details(sunny, cloudy);
@@ -16,7 +16,7 @@ function plot_cost_bars(sunny, cloudy)
 %PLOT_COST_BARS Daily and monthly cost comparison bar charts.
 
     scenario_names = {'Sunny', 'Cloudy'};
-    phase_names = {'Baseline', 'Heuristic EMS', 'LP naive', 'LP aware'};
+    stage_names = {'Baseline', 'Heuristic EMS', 'LP naive', 'LP aware'};
     scenarios = {sunny, cloudy};
     daily_costs = zeros(2, 4);
     grid_costs = zeros(2, 4);
@@ -24,39 +24,39 @@ function plot_cost_bars(sunny, cloudy)
     for scenario_index = 1:numel(scenarios)
         scenario = scenarios{scenario_index};
         daily_costs(scenario_index, :) = [ ...
-            scenario.phase0.total_cost, ...
-            scenario.phase1.total_cost, ...
-            scenario.phase2.total_cost, ...
-            scenario.phase3.total_cost];
+            scenario.stage0.total_cost, ...
+            scenario.stage1.total_cost, ...
+            scenario.stage2.total_cost, ...
+            scenario.stage3.total_cost];
         grid_costs(scenario_index, :) = [ ...
-            scenario.phase0.grid_cost, ...
-            scenario.phase1.grid_cost, ...
-            scenario.phase2.grid_cost, ...
-            scenario.phase3.grid_cost];
+            scenario.stage0.grid_cost, ...
+            scenario.stage1.grid_cost, ...
+            scenario.stage2.grid_cost, ...
+            scenario.stage3.grid_cost];
     end
 
     figure('Name', 'Sunny and Cloudy Cost Comparison', ...
         'Position', [150, 100, 1200, 700]);
     subplot(1, 3, 1);
-    grouped_bars(daily_costs, scenario_names, phase_names, ...
+    grouped_bars(daily_costs, scenario_names, stage_names, ...
         'Daily total cost', 'Cost [Rs/day]');
     subplot(1, 3, 2);
-    grouped_bars(30 * daily_costs, scenario_names, phase_names, ...
+    grouped_bars(30 * daily_costs, scenario_names, stage_names, ...
         'Monthly total cost', 'Cost [Rs/month]');
     subplot(1, 3, 3);
-    grouped_bars(grid_costs, scenario_names, phase_names, ...
+    grouped_bars(grid_costs, scenario_names, stage_names, ...
         'Daily grid cost', 'Cost [Rs/day]');
     sgtitle('Cost comparison: sunny vs. cloudy');
 end
 
-function grouped_bars(costs, scenario_names, phase_names, plot_title, y_label)
+function grouped_bars(costs, scenario_names, stage_names, plot_title, y_label)
     bar(costs);
     grid on;
     set(gca, 'XTick', 1:numel(scenario_names), ...
         'XTickLabel', scenario_names);
     ylabel(y_label);
     title(plot_title);
-    legend(phase_names, 'Location', 'northwest');
+    legend(stage_names, 'Location', 'northwest');
 end
 
 function plot_daily_details(sunny, cloudy)
@@ -68,8 +68,8 @@ function plot_daily_details(sunny, cloudy)
 
     scenarios = {sunny, cloudy};
     scenario_names = {'Sunny', 'Cloudy'};
-    phase_names = {'Baseline', 'Heuristic', 'LP naive', 'LP aware'};
-    phase_fields = {'phase0', 'phase1', 'phase2', 'phase3'};
+    stage_names = {'Baseline', 'Heuristic', 'LP naive', 'LP aware'};
+    stage_fields = {'stage0', 'stage1', 'stage2', 'stage3'};
 
     for s = 1:2
         scenario = scenarios{s};
@@ -78,7 +78,7 @@ function plot_daily_details(sunny, cloudy)
             'Position', [50 + (s - 1) * 750, 40, 720, 1150]);
 
         for p = 1:4
-            phase = scenario.(phase_fields{p});
+            stage = scenario.(stage_fields{p});
             subplot(4, 1, p);
 
             hold on;
@@ -86,15 +86,15 @@ function plot_daily_details(sunny, cloudy)
                 'Color', [0.85, 0.65, 0.13]);
             plot(scenario.time, scenario.P_load, 'LineWidth', 1.2, ...
                 'Color', [0.85, 0.33, 0.10]);
-            plot(scenario.time, phase.P_gimp, 'LineWidth', 1.2, ...
+            plot(scenario.time, stage.P_gimp, 'LineWidth', 1.2, ...
                 'Color', [0.00, 0.45, 0.74]);
-            plot(scenario.time, -phase.P_gexp, 'LineWidth', 1.2, ...
+            plot(scenario.time, -stage.P_gexp, 'LineWidth', 1.2, ...
                 'Color', [0.00, 0.65, 0.30]);
 
             if p > 1
-                plot(scenario.time, phase.P_ch, 'LineWidth', 1.0, ...
+                plot(scenario.time, stage.P_ch, 'LineWidth', 1.0, ...
                     'Color', [0.49, 0.18, 0.56]);
-                plot(scenario.time, -phase.P_dis, 'LineWidth', 1.0, ...
+                plot(scenario.time, -stage.P_dis, 'LineWidth', 1.0, ...
                     'Color', [0, 0, 0]);
             end
 
@@ -104,7 +104,7 @@ function plot_daily_details(sunny, cloudy)
             xlabel('Time [h]');
             ylabel('Power [kW]');
             title(sprintf('%s - %s (Rs%.2f/day)', ...
-                scenario_names{s}, phase_names{p}, phase.total_cost));
+                scenario_names{s}, stage_names{p}, stage.total_cost));
 
             if p == 1
                 legend('P_{pv}', 'P_{load}', 'P_{g,imp}', '-P_{g,exp}', ...

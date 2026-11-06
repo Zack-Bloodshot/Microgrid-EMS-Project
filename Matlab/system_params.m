@@ -26,7 +26,7 @@ function params = system_params()
     params.eta_dis   = 0.95;         % [-] Discharging efficiency
 
     %% --- Battery degradation parameters ---
-    % One shared model for every phase (battery_degradation.m). Rated life is
+    % One shared model for every stage (battery_degradation.m). Rated life is
     % 5000 cycles at the usable depth-of-discharge window
     % (SOC_max - SOC_min = 0.80), priced as a linear throughput cost:
     %   c_deg = Cost_replacement / (N_cycles_rated * 2 * E_B * DoD_rated)
