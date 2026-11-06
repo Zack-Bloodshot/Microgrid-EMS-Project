@@ -1,4 +1,4 @@
--function results = run_all_stages(alpha)
+function results = run_all_stages(alpha)
 %RUN_ALL_STAGES Run and compare the Stage 0/1/2/3 EMS runs.
 %   results = RUN_ALL_STAGES() uses alpha = 1 for Stage 3.
 %   results = RUN_ALL_STAGES(alpha) sets the Stage 3 degradation weight.
